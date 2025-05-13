@@ -82,6 +82,10 @@ const Lokasi = () => {
     }
   };
 
+  const formatCoordinates = (latitude, longitude) => {
+    return `${latitude}, ${longitude}`;
+  };
+
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
@@ -180,6 +184,12 @@ const Lokasi = () => {
                         Nama Lokasi
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>
+                        Latitude
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>
+                        Longitude
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>
                         Koordinat
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>
@@ -212,7 +222,9 @@ const Lokasi = () => {
                               {lokasi.Nama_Lokasi}
                             </Box>
                           </TableCell>
-                          <TableCell align="center">{lokasi.Koordinat}</TableCell>
+                          <TableCell align="center">{lokasi.latitude}</TableCell>
+                          <TableCell align="center">{lokasi.longitude}</TableCell>
+                          <TableCell align="center">{formatCoordinates(lokasi.latitude, lokasi.longitude)}</TableCell>
                           <TableCell align="center">
                             <Tooltip title="Hapus lokasi" arrow>
                               <IconButton
@@ -234,7 +246,7 @@ const Lokasi = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                        <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                             <MapIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
                             <Typography variant="body1" color="text.secondary">

@@ -12,12 +12,10 @@ import {
   Divider,
   Tooltip,
   CircularProgress,
-  Fade,
   Alert,
   Snackbar,
   Stack
 } from '@mui/material';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/partials/Layout';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
@@ -26,11 +24,15 @@ import SaveIcon from '@mui/icons-material/Save';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ExploreIcon from '@mui/icons-material/Explore';
 import CancelIcon from '@mui/icons-material/Cancel';
+import NorthIcon from '@mui/icons-material/North';
+import EastIcon from '@mui/icons-material/East';
+import { addLokasi } from '../services/lokasiService'; // Import the service
 
 const AddLokasi = () => {
   const [formData, setFormData] = useState({
     nama_lokasi: '',
-    koordinat: '',
+    latitude: '',
+    longitude: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -47,10 +49,16 @@ const AddLokasi = () => {
       newErrors.nama_lokasi = 'Nama lokasi tidak boleh kosong';
     }
     
-    if (!formData.koordinat.trim()) {
-      newErrors.koordinat = 'Koordinat tidak boleh kosong';
-    } else if (!/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(formData.koordinat)) {
-      newErrors.koordinat = 'Format koordinat harus berupa "latitude, longitude"';
+    if (!formData.latitude.trim()) {
+      newErrors.latitude = 'Latitude tidak boleh kosong';
+    } else if (!/^-?\d+(\.\d+)?$/.test(formData.latitude)) {
+      newErrors.latitude = 'Format latitude harus berupa angka (contoh: -6.123456)';
+    }
+    
+    if (!formData.longitude.trim()) {
+      newErrors.longitude = 'Longitude tidak boleh kosong';
+    } else if (!/^-?\d+(\.\d+)?$/.test(formData.longitude)) {
+      newErrors.longitude = 'Format longitude harus berupa angka (contoh: 106.123456)';
     }
     
     setErrors(newErrors);
@@ -76,8 +84,9 @@ const AddLokasi = () => {
     
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/api/lokasi', formData);
-      console.log('Lokasi berhasil ditambahkan:', response.data);
+      // Using the service function instead of direct axios call
+      const response = await addLokasi(formData);
+      console.log('Lokasi berhasil ditambahkan:', response);
       setSnackbar({
         open: true,
         message: 'Lokasi berhasil ditambahkan',
@@ -199,23 +208,47 @@ const AddLokasi = () => {
                   </Stack>
                 </Grid>
                 
-                <Grid item xs={12}>
+                <Grid item xs={12} md={6}>
                   <Stack spacing={1}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <ExploreIcon color="primary" sx={{ mr: 1 }} />
+                      <NorthIcon color="primary" sx={{ mr: 1 }} />
                       <Typography variant="subtitle1" fontWeight="medium">
-                        Koordinat
+                        Latitude
                       </Typography>
                     </Box>
                     <TextField
                       fullWidth
-                      placeholder="Masukkan koordinat (mis: -6.123456, 106.123456)"
-                      name="koordinat"
-                      value={formData.koordinat}
+                      placeholder="Masukkan latitude (mis: -6.123456)"
+                      name="latitude"
+                      value={formData.latitude}
                       onChange={handleChange}
                       variant="outlined"
-                      error={!!errors.koordinat}
-                      helperText={errors.koordinat || "Format: latitude, longitude"}
+                      error={!!errors.latitude}
+                      helperText={errors.latitude}
+                      InputProps={{
+                        sx: { borderRadius: 2 }
+                      }}
+                    />
+                  </Stack>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <EastIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        Longitude
+                      </Typography>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      placeholder="Masukkan longitude (mis: 106.123456)"
+                      name="longitude"
+                      value={formData.longitude}
+                      onChange={handleChange}
+                      variant="outlined"
+                      error={!!errors.longitude}
+                      helperText={errors.longitude}
                       InputProps={{
                         sx: { borderRadius: 2 }
                       }}

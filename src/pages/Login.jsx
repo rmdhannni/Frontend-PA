@@ -9,14 +9,32 @@ import {
   Box,
   Card,
   CardContent,
+  InputAdornment,
+  IconButton,
+  Paper,
+  Divider,
+  FormControlLabel,
+  Avatar,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import GoogleIcon from '@mui/icons-material/Google';
+import FacebookIcon from '@mui/icons-material/Facebook';
 import AuthService from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,62 +57,178 @@ const Login = () => {
       alert('Login gagal. Periksa email dan password.');
     }
   };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
   
   return (
-    <Container
-      maxWidth="sm"
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-      }}
-    >
-      <Card sx={{ width: '100%', backgroundColor: '#e3f2fd', boxShadow: 3 }}>
-        <CardContent>
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Typography variant="h5" textAlign="center" gutterBottom>
-              Sign In
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <Paper 
+          elevation={6}
+          sx={{
+            width: '100%',
+            borderRadius: 4,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: 'primary.main',
+              py: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+              <LockOutlinedIcon />
+            </Avatar>
+            <Typography component="h1" variant="h5" color="white" fontWeight="bold">
+              Selamat Datang
             </Typography>
-
-            <TextField
-              label="Email Address"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-              fullWidth
-            />
-
-            <TextField
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              fullWidth
-            />
-
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center">
-                <Checkbox />
-                <Typography variant="body2">Remember me</Typography>
-              </Box>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Box>
-
-            <Button type="submit" variant="contained" color="primary" fullWidth>
-              Sign in
-            </Button>
-
-            <Typography textAlign="center">
-              Not a member? <Link href="/register">Register</Link>
+            <Typography variant="body2" color="white" textAlign="center">
+              Masuk ke akun Anda untuk melanjutkan
             </Typography>
           </Box>
-        </CardContent>
-      </Card>
+
+          <CardContent sx={{ p: 4 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon color="primary" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+                variant="outlined"
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                id="password"
+                autoComplete="current-password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon color="primary" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+                variant="outlined"
+              />
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <FormControlLabel
+                  control={<Checkbox value="remember" color="primary" />}
+                  label="Ingat saya"
+                />
+                <Link href="#" variant="body2" color="primary.main" fontWeight="500">
+                  Lupa password?
+                </Link>
+              </Box>
+              
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ 
+                  mt: 2, 
+                  mb: 3, 
+                  py: 1.5,
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  fontSize: '1rem'
+                }}
+              >
+                Masuk
+              </Button>
+
+              <Divider sx={{ my: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Atau masuk dengan
+                </Typography>
+              </Divider>
+
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<GoogleIcon />}
+                  sx={{ 
+                    borderRadius: 2,
+                    py: 1,
+                    flex: 1,
+                    textTransform: 'none'
+                  }}
+                >
+                  Google
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<FacebookIcon />}
+                  sx={{ 
+                    borderRadius: 2,
+                    py: 1,
+                    flex: 1,
+                    textTransform: 'none'
+                  }}
+                >
+                  Facebook
+                </Button>
+              </Box>
+
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography variant="body2">
+                  Belum punya akun?{' '}
+                  <Link href="/register" variant="body2" fontWeight="bold" color="primary.main">
+                    Daftar Sekarang
+                  </Link>
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Paper>
+      </Box>
     </Container>
   );
 };

@@ -7,6 +7,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   Typography,
   Button,
@@ -21,7 +22,9 @@ import {
   Divider,
   Grid,
   Backdrop,
-  Container
+  Container,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,22 +34,42 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import StorageIcon from '@mui/icons-material/Storage';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import Layout from '../components/partials/Layout';
 import { getAllPlat, deletePlat } from '../services/platService';
 import { getAllLokasi } from '../services/lokasiService';
 
 const Plat = () => {
   const [plat, setPlat] = useState([]);
+  const [filteredPlat, setFilteredPlat] = useState([]);
   const [lokasi, setLokasi] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Filter data whenever search term changes
+    if (plat.length > 0) {
+      const filtered = plat.filter(item => 
+        item.Nama_plat.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.Lot_Batch_Number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.ID_Plat.toString().includes(searchTerm.toLowerCase()) ||
+        getLokasiName(item.ID_Lokasi).toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredPlat(filtered);
+      setPage(0); // Reset to first page when filtering
+    }
+  }, [searchTerm, plat]);
 
   const fetchData = async () => {
     try {
@@ -54,6 +77,7 @@ const Plat = () => {
       // Get data from service functions
       const platData = await getAllPlat();
       setPlat(platData);
+      setFilteredPlat(platData);
       
       try {
         const lokasiData = await getAllLokasi();
@@ -120,6 +144,16 @@ const Plat = () => {
     }
   };
 
+  // Pagination handlers
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   if (loading) {
     return (
       <Backdrop open={true} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -179,46 +213,75 @@ const Plat = () => {
                   severity="error" 
                   sx={{ mb: 3 }}
                   variant="filled"
+                  onClose={() => setError(null)}
                 >
                   {error}
                 </Alert>
               )}
               
               <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => navigate('/plat/add')}
-                    startIcon={<AddIcon />}
-                    sx={{
-                      borderRadius: 2,
-                      px: 3,
-                      py: 1,
-                      boxShadow: 3
-                    }}
-                  >
-                    Tambahkan Data Plat
-                  </Button>
+                <Grid item xs={12} md={6}>
+                  <Grid container spacing={2}>
+                    <Grid item>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => navigate('/plat/add')}
+                        startIcon={<AddIcon />}
+                        sx={{
+                          borderRadius: 2,
+                          px: 3,
+                          py: 1,
+                          boxShadow: 3
+                        }}
+                      >
+                        Tambahkan Data Plat
+                      </Button>
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={fetchData}
+                        startIcon={<RefreshIcon />}
+                        sx={{
+                          borderRadius: 2,
+                          px: 3,
+                          py: 1
+                        }}
+                      >
+                        Refresh
+                      </Button>
+                    </Grid>
+                  </Grid>
                 </Grid>
-                <Grid item>
-                  <Button
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
                     variant="outlined"
-                    color="primary"
-                    onClick={fetchData}
-                    startIcon={<RefreshIcon />}
-                    sx={{
-                      borderRadius: 2,
-                      px: 3,
-                      py: 1
+                    placeholder="Cari berdasarkan nama, lot, ID, atau lokasi..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                      endAdornment: searchTerm && (
+                        <InputAdornment position="end">
+                          <IconButton size="small" onClick={() => setSearchTerm('')}>
+                            &times;
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      sx: { borderRadius: 2 }
                     }}
-                  >
-                    Refresh
-                  </Button>
+                  />
                 </Grid>
               </Grid>
               
-              {plat.length === 0 ? (
+              {filteredPlat.length === 0 ? (
                 <Alert 
                   severity="info"
                   variant="outlined"
@@ -230,113 +293,134 @@ const Plat = () => {
                     borderRadius: 2
                   }}
                 >
-                  Tidak ada data plat yang tersedia
+                  {searchTerm ? 'Tidak ada data plat yang sesuai dengan pencarian' : 'Tidak ada data plat yang tersedia'}
                 </Alert>
               ) : (
-                <TableContainer
-                  component={Paper}
-                  sx={{
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    boxShadow: 2
-                  }}
-                >
-                  <Table sx={{ minWidth: 1100 }}>
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>ID</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Nama Plat</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Lot/Batch</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Kuantitas</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Lokasi</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Status</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Aksi</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {plat.map((item) => (
-                        <TableRow 
-                          key={item.ID_Plat}
-                          sx={{ 
-                            '&:hover': { bgcolor: '#f0f7ff' },
-                            bgcolor: hoveredRow === item.ID_Plat ? '#f0f7ff' : 'inherit',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                          onMouseEnter={() => setHoveredRow(item.ID_Plat)}
-                          onMouseLeave={() => setHoveredRow(null)}
-                        >
-                          <TableCell 
-                            align="center" 
-                            sx={{ 
-                              fontSize: '0.9rem',
-                              fontWeight: 'medium'
-                            }}
-                          >
-                            {item.ID_Plat}
-                          </TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.9rem' }}>{item.Nama_plat}</TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.9rem' }}>{item.Lot_Batch_Number}</TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.9rem' }}>{item.Kuantitas}</TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.9rem' }}>
-                            <Chip 
-                              label={getLokasiName(item.ID_Lokasi)}
-                              color="info"
-                              variant="outlined"
-                              size="small"
-                              sx={{ fontWeight: 'medium' }}
-                            />
-                          </TableCell>
-                          <TableCell align="center" sx={{ fontSize: '0.9rem' }}>
-                            <Chip 
-                              icon={getStatusIcon(item.Status)}
-                              label={item.Status}
-                              color={getStatusColor(item.Status)}
-                              variant="filled"
-                              size="small"
-                              sx={{ fontWeight: 'medium' }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Tooltip title="Edit Data" arrow TransitionComponent={Fade} TransitionProps={{ timeout: 600 }}>
-                              <IconButton
-                                color="primary"
-                                onClick={() => navigate(`/plat/update/${item.ID_Plat}`)}
-                                sx={{ 
-                                  mx: 0.5,
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                    transform: 'scale(1.1)',
-                                    transition: 'transform 0.2s'
-                                  }
-                                }}
-                              >
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Hapus Data" arrow TransitionComponent={Fade} TransitionProps={{ timeout: 600 }}>
-                              <IconButton
-                                color="error"
-                                onClick={() => handleDelete(item.ID_Plat)}
-                                disabled={deleteLoading}
-                                sx={{ 
-                                  mx: 0.5,
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(211, 47, 47, 0.08)',
-                                    transform: 'scale(1.1)',
-                                    transition: 'transform 0.2s'
-                                  }
-                                }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </TableCell>
+                <>
+                  <TableContainer
+                    component={Paper}
+                    sx={{
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      boxShadow: 2,
+                      mb: 2
+                    }}
+                  >
+                    <Table sx={{ minWidth: 1100 }} stickyHeader>
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>ID</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Nama Plat</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Lot/Batch</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Kuantitas</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Lokasi</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Status</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Aksi</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHead>
+                      <TableBody>
+                        {filteredPlat
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((item) => (
+                          <TableRow 
+                            key={item.ID_Plat}
+                            sx={{ 
+                              '&:hover': { bgcolor: '#f0f7ff' },
+                              bgcolor: hoveredRow === item.ID_Plat ? '#f0f7ff' : 'inherit',
+                              transition: 'background-color 0.2s ease'
+                            }}
+                            onMouseEnter={() => setHoveredRow(item.ID_Plat)}
+                            onMouseLeave={() => setHoveredRow(null)}
+                          >
+                            <TableCell 
+                              align="center" 
+                              sx={{ 
+                                fontSize: '0.9rem',
+                                fontWeight: 'medium'
+                              }}
+                            >
+                              {item.ID_Plat}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontSize: '0.9rem' }}>{item.Nama_plat}</TableCell>
+                            <TableCell align="center" sx={{ fontSize: '0.9rem' }}>{item.Lot_Batch_Number}</TableCell>
+                            <TableCell align="center" sx={{ fontSize: '0.9rem' }}>{item.Kuantitas}</TableCell>
+                            <TableCell align="center" sx={{ fontSize: '0.9rem' }}>
+                              <Chip 
+                                label={getLokasiName(item.ID_Lokasi)}
+                                color="info"
+                                variant="outlined"
+                                size="small"
+                                sx={{ fontWeight: 'medium' }}
+                              />
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontSize: '0.9rem' }}>
+                              <Chip 
+                                icon={getStatusIcon(item.Status)}
+                                label={item.Status}
+                                color={getStatusColor(item.Status)}
+                                variant="filled"
+                                size="small"
+                                sx={{ fontWeight: 'medium' }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Tooltip title="Edit Data" arrow TransitionComponent={Fade} TransitionProps={{ timeout: 600 }}>
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => navigate(`/plat/update/${item.ID_Plat}`)}
+                                  sx={{ 
+                                    mx: 0.5,
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                      transform: 'scale(1.1)',
+                                      transition: 'transform 0.2s'
+                                    }
+                                  }}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Hapus Data" arrow TransitionComponent={Fade} TransitionProps={{ timeout: 600 }}>
+                                <IconButton
+                                  color="error"
+                                  onClick={() => handleDelete(item.ID_Plat)}
+                                  disabled={deleteLoading}
+                                  sx={{ 
+                                    mx: 0.5,
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                                      transform: 'scale(1.1)',
+                                      transition: 'transform 0.2s'
+                                    }
+                                  }}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50]}
+                    component="div"
+                    count={filteredPlat.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    labelRowsPerPage="Data per halaman:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} dari ${count}`}
+                  />
+                </>
               )}
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+                Total data: {filteredPlat.length} {searchTerm && `(filter aktif: "${searchTerm}")`}
+              </Typography>
             </CardContent>
           </Card>
         </Box>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL untuk API
-const API_URL = 'http://localhost:3000/api';// Disesuaikan dengan port yang benar untuk API
+const API_URL = 'http://localhost:3000/api';
 
 /**
  * Mengambil semua data lokasi dari API
@@ -18,7 +18,7 @@ export const getAllLokasi = async () => {
 
 /**
  * Mengambil data lokasi berdasarkan ID
- * @param {string} id - ID lokasi yang akan diambil
+ * @param {number} id - ID lokasi yang akan diambil
  */
 export const getLokasiById = async (id) => {
   try {
@@ -46,7 +46,7 @@ export const addLokasi = async (lokasiData) => {
 
 /**
  * Memperbarui data lokasi
- * @param {string} id - ID lokasi yang akan diperbarui
+ * @param {number} id - ID lokasi yang akan diperbarui
  * @param {Object} lokasiData - Data lokasi yang baru
  */
 export const updateLokasi = async (id, lokasiData) => {
@@ -61,7 +61,7 @@ export const updateLokasi = async (id, lokasiData) => {
 
 /**
  * Menghapus data lokasi
- * @param {string} id - ID lokasi yang akan dihapus
+ * @param {number} id - ID lokasi yang akan dihapus
  */
 export const deleteLokasi = async (id) => {
   try {
