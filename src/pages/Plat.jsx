@@ -24,7 +24,12 @@ import {
   Backdrop,
   Container,
   TextField,
-  InputAdornment
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
@@ -51,6 +56,7 @@ const Plat = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, name: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,41 +80,106 @@ const Plat = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       // Get data from service functions
       const platData = await getAllPlat();
-      setPlat(platData);
-      setFilteredPlat(platData);
+      setPlat(platData || []);
+      setFilteredPlat(platData || []);
       
       try {
         const lokasiData = await getAllLokasi();
-        setLokasi(lokasiData);
+        setLokasi(lokasiData || []);
       } catch (locErr) {
         console.error('Error fetching lokasi data:', locErr);
         // Continue even if location data fetch fails
       }
       
-      setError(null);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Gagal mengambil data. Silakan coba lagi nanti.');
+      setPlat([]);
+      setFilteredPlat([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Yakin ingin menghapus data ini?')) {
-      try {
-        setDeleteLoading(true);
-        await deletePlat(id);
-        // Refresh data after delete
-        fetchData();
-      } catch (err) {
-        console.error('Error deleting plat:', err);
-        setError('Gagal menghapus data. Silakan coba lagi.');
-        setDeleteLoading(false);
+  const handleDeleteClick = (id, name) => {
+    setDeleteDialog({ open: true, id, name });
+  };
+
+  const handleDeleteConfirm = async () => {
+    const { id } = deleteDialog;
+    try {
+      setDeleteLoading(true);
+      setError(null);
+      
+      // Call delete service
+      await deletePlat(id);
+      
+      // Update local state immediately for better UX
+      const updatedPlat = plat.filter(item => item.ID_Plat !== id);
+      setPlat(updatedPlat);
+      setFilteredPlat(updatedPlat.filter(item => 
+        item.Nama_plat.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.Lot_Batch_Number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.ID_Plat.toString().includes(searchTerm.toLowerCase()) ||
+        getLokasiName(item.ID_Lokasi).toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+      
+      // Close dialog
+      setDeleteDialog({ open: false, id: null, name: '' });
+      
+      // Show success message (optional - you can add a success state if needed)
+      console.log(`Successfully deleted plat with ID: ${id}`);
+      
+    } catch (err) {
+      console.error('Error deleting plat:', err);
+      
+      // More detailed error handling
+      let errorMessage = 'Gagal menghapus data. ';
+      
+      if (err.response) {
+        // Server responded with error status
+        const status = err.response.status;
+        const data = err.response.data;
+        
+        switch (status) {
+          case 404:
+            errorMessage += 'Data tidak ditemukan.';
+            break;
+          case 403:
+            errorMessage += 'Tidak memiliki izin untuk menghapus data ini.';
+            break;
+          case 409:
+            errorMessage += 'Data tidak dapat dihapus karena masih digunakan oleh data lain.';
+            break;
+          case 500:
+            errorMessage += 'Terjadi kesalahan server. Silakan coba lagi nanti.';
+            break;
+          default:
+            errorMessage += data?.message || `Error ${status}: ${err.response.statusText}`;
+        }
+      } else if (err.request) {
+        // Network error
+        errorMessage += 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+      } else {
+        // Other error
+        errorMessage += err.message || 'Terjadi kesalahan yang tidak diketahui.';
       }
+      
+      setError(errorMessage);
+      
+      // Close dialog
+      setDeleteDialog({ open: false, id: null, name: '' });
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({ open: false, id: null, name: '' });
   };
 
   // Function to get location name based on ID_Lokasi
@@ -244,6 +315,7 @@ const Plat = () => {
                         color="primary"
                         onClick={fetchData}
                         startIcon={<RefreshIcon />}
+                        disabled={loading}
                         sx={{
                           borderRadius: 2,
                           px: 3,
@@ -383,7 +455,7 @@ const Plat = () => {
                               <Tooltip title="Hapus Data" arrow TransitionComponent={Fade} TransitionProps={{ timeout: 600 }}>
                                 <IconButton
                                   color="error"
-                                  onClick={() => handleDelete(item.ID_Plat)}
+                                  onClick={() => handleDeleteClick(item.ID_Plat, item.Nama_plat)}
                                   disabled={deleteLoading}
                                   sx={{ 
                                     mx: 0.5,
@@ -425,6 +497,48 @@ const Plat = () => {
           </Card>
         </Box>
       </Container>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="delete-dialog-title" sx={{ color: 'error.main' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningIcon />
+            Konfirmasi Hapus Data
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Apakah Anda yakin ingin menghapus data plat "<strong>{deleteDialog.name}</strong>" dengan ID {deleteDialog.id}?
+            <br /><br />
+            <em>Tindakan ini tidak dapat dibatalkan.</em>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button 
+            onClick={handleDeleteCancel} 
+            variant="outlined"
+            disabled={deleteLoading}
+          >
+            Batal
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            disabled={deleteLoading}
+            startIcon={deleteLoading ? <CircularProgress size={16} /> : <DeleteIcon />}
+          >
+            {deleteLoading ? 'Menghapus...' : 'Hapus'}
+          </Button>
+        </DialogActions>
+      </Dialog>
       
       {/* Background overlay during delete operation */}
       <Backdrop

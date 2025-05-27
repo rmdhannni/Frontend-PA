@@ -11,7 +11,6 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
-  Collapse,
   useTheme,
   useMediaQuery
 } from '@mui/material';
@@ -20,27 +19,17 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import SpeedIcon from '@mui/icons-material/Speed';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import BarChartIcon from '@mui/icons-material/BarChart';
 
-const drawerWidth = 260;
+const drawerWidth = 260; // Define the width of the sidebar drawer
 
 const Sidebar = ({ open, onClose }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [openReports, setOpenReports] = useState(false);
+  const navigate = useNavigate(); // Hook for navigation
+  const location = useLocation(); // Hook to get current location for active tab highlighting
+  const theme = useTheme(); // Access the Material-UI theme
+  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Check if current screen size is mobile (less than 'md' breakpoint)
 
-  const handleReportsClick = () => {
-    setOpenReports(!openReports);
-  };
-
-  // Define navigation items
+  // Define navigation items for the sidebar
   const menuItems = [
     {
       text: 'Dashboard',
@@ -64,38 +53,22 @@ const Sidebar = ({ open, onClose }) => {
     }
   ];
 
-  // Define submenu items for reports
-  const reportItems = [
-    {
-      text: 'Analytics',
-      icon: <AnalyticsIcon />,
-      path: '/analytics'
-    },
-    {
-      text: 'Performance',
-      icon: <SpeedIcon />,
-      path: '/performance'
-    },
-    {
-      text: 'Statistics',
-      icon: <BarChartIcon />,
-      path: '/statistics'
-    }
-  ];
-
+  // Helper function to check if the current route matches the item's path
   const isCurrentRoute = (path) => {
     return location.pathname === path;
   };
 
+  // Content to be rendered inside the drawer (sidebar)
   const drawerContent = (
     <>
+      {/* Toolbar section at the top of the sidebar */}
       <Toolbar sx={{ 
         display: 'flex', 
-        justifyContent: isMobile ? 'space-between' : 'center',
+        justifyContent: isMobile ? 'space-between' : 'center', // Adjust alignment based on mobile/desktop
         alignItems: 'center',
-        px: [1, 2],
-        py: 2,
-        minHeight: '64px !important'
+        px: [1, 2], // Horizontal padding
+        py: 2, // Vertical padding
+        minHeight: '64px !important' // Ensure minimum height
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography 
@@ -104,137 +77,72 @@ const Sidebar = ({ open, onClose }) => {
             sx={{ 
               color: 'inherit', 
               textAlign: 'center',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+              overflow: 'hidden', // Hide overflowing text
+              textOverflow: 'ellipsis', // Add ellipsis for overflowing text
+              whiteSpace: 'nowrap' // Prevent text from wrapping
             }}
           >
             Admin Dashboard
           </Typography>
         </Box>
         {isMobile && (
+          // Close button for mobile sidebar
           <IconButton onClick={onClose} sx={{ color: 'inherit' }}>
             <ChevronLeftIcon />
           </IconButton>
         )}
       </Toolbar>
-      <Divider sx={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />
+      <Divider sx={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }} /> {/* Divider below the header */}
       
+      {/* List of navigation items */}
       <List component="nav" sx={{ px: 1 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding sx={{ display: 'block', my: 0.5 }}>
             <ListItemButton
               sx={{
-                minHeight: 48,
-                px: 2.5,
-                py: 1.2,
-                borderRadius: 2,
+                minHeight: 48, // Minimum height for list item button
+                px: 2.5, // Horizontal padding
+                py: 1.2, // Vertical padding
+                borderRadius: 2, // Rounded corners
+                // Highlight background if it's the current route
                 backgroundColor: isCurrentRoute(item.path) ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)', // Hover effect
                 },
               }}
-              onClick={() => navigate(item.path)}
+              onClick={() => navigate(item.path)} // Navigate to the path on click
             >
               <ListItemIcon
                 sx={{
-                  minWidth: 0,
-                  mr: 2,
+                  minWidth: 0, // Remove minimum width for icon
+                  mr: 2, // Right margin for icon
                   justifyContent: 'center',
-                  color: 'inherit'
+                  color: 'inherit' // Inherit color from parent
                 }}
               >
-                {item.icon}
+                {item.icon} {/* Display the icon */}
               </ListItemIcon>
               <ListItemText 
-                primary={item.text} 
+                primary={item.text} // Display the text
                 primaryTypographyProps={{ 
-                  fontSize: '0.95rem',
-                  fontWeight: isCurrentRoute(item.path) ? 'bold' : 'normal'
+                  fontSize: '0.95rem', // Font size for text
+                  fontWeight: isCurrentRoute(item.path) ? 'bold' : 'normal' // Bold text if active
                 }} 
               />
             </ListItemButton>
           </ListItem>
         ))}
-
-        <ListItem disablePadding sx={{ display: 'block', my: 0.5 }}>
-          <ListItemButton
-            onClick={handleReportsClick}
-            sx={{
-              minHeight: 48,
-              px: 2.5,
-              py: 1.2,
-              borderRadius: 2,
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              },
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                mr: 2,
-                justifyContent: 'center',
-                color: 'inherit'
-              }}
-            >
-              <BarChartIcon />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Reports" 
-              primaryTypographyProps={{ fontSize: '0.95rem' }} 
-            />
-            {openReports ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
-          <Collapse in={openReports} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {reportItems.map((item) => (
-                <ListItemButton
-                  key={item.text}
-                  sx={{
-                    pl: 6,
-                    py: 1,
-                    borderRadius: 2,
-                    ml: 2,
-                    backgroundColor: isCurrentRoute(item.path) ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    },
-                  }}
-                  onClick={() => navigate(item.path)}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: 2,
-                      justifyContent: 'center',
-                      color: 'inherit'
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    primaryTypographyProps={{ 
-                      fontSize: '0.9rem',
-                      fontWeight: isCurrentRoute(item.path) ? 'bold' : 'normal'
-                    }} 
-                  />
-                </ListItemButton>
-              ))}
-            </List>
-          </Collapse>
-        </ListItem>
       </List>
       
-      <Box sx={{ flexGrow: 1 }} />
+      <Box sx={{ flexGrow: 1 }} /> {/* Spacer to push content to the bottom */}
       
+      {/* System Version information at the bottom of the sidebar */}
       <Box sx={{ p: 2, mt: 2 }}>
         <Box
           sx={{
             p: 2,
             borderRadius: 2,
-            bgcolor: 'rgba(255, 255, 255, 0.1)',
+            bgcolor: 'rgba(255, 255, 255, 0.1)', // Background color
             textAlign: 'center'
           }}
         >
@@ -252,6 +160,7 @@ const Sidebar = ({ open, onClose }) => {
   return (
     <>
       {isMobile ? (
+        // Temporary Drawer for mobile screens
         <Drawer
           variant="temporary"
           open={open}
@@ -260,32 +169,33 @@ const Sidebar = ({ open, onClose }) => {
             keepMounted: true, // Better open performance on mobile
           }}
           sx={{
-            display: { xs: 'block', md: 'none' },
+            display: { xs: 'block', md: 'none' }, // Display only on extra-small to medium screens
             '& .MuiDrawer-paper': { 
               boxSizing: 'border-box', 
-              width: drawerWidth,
-              backgroundColor: '#1976d2',
-              color: 'white',
+              width: drawerWidth, // Set drawer width
+              backgroundColor: '#1976d2', // Background color
+              color: 'white', // Text color
             },
           }}
         >
           {drawerContent}
         </Drawer>
       ) : (
+        // Permanent Drawer for desktop screens
         <Drawer
           variant="permanent"
           sx={{
-            width: drawerWidth,
-            flexShrink: 0,
+            width: drawerWidth, // Set drawer width
+            flexShrink: 0, // Prevent drawer from shrinking
             '& .MuiDrawer-paper': { 
               width: drawerWidth, 
               boxSizing: 'border-box',
               backgroundColor: '#1976d2',
               color: 'white',
-              borderRight: 0,
+              borderRight: 0, // Remove right border
             },
           }}
-          open
+          open // Always open for permanent drawer
         >
           {drawerContent}
         </Drawer>

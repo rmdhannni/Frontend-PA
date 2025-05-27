@@ -213,130 +213,132 @@ const StatCard = ({ title, value, icon, color, trend }) => {
 
 // MapComponent
 const MapComponent = React.memo(({ lotData, loading }) => {
-  const mapRef = useRef();
-  const routingControlRef = useRef();
-  const { location: userLocation, error: locationError } = useGeolocation();
+  const mapRef = useRef();
+  const { location: userLocation, error: locationError } = useGeolocation();
 
-  useEffect(() => {
-    if (!mapRef.current || !userLocation) return;
+  useEffect(() => {
+    if (!mapRef.current || !userLocation) return;
+    const map = mapRef.current;
+    map.setView([userLocation.lat, userLocation.lng], 15);
+    map.setMaxBounds(SURABAYA_BOUNDS);
+    map.setMinZoom(12);
+    map.setMaxZoom(19);
+  }, [userLocation]);
+
+  // ✨ useEffect untuk menggambar rute telah diperbaiki di sini ✨
+  useEffect(() => {
+    // Jika tidak ada data lokasi material atau lokasi user, jangan lakukan apa-apa
+    if (!lotData || !userLocation || !mapRef.current) return;
+
+    // Dapatkan instance map dari ref
     const map = mapRef.current;
-    map.setView([userLocation.lat, userLocation.lng], 15);
-    map.setMaxBounds(SURABAYA_BOUNDS);
-    map.setMinZoom(12);
-    map.setMaxZoom(19);
-  }, [userLocation]);
 
-  useEffect(() => {
-    if (!lotData || !userLocation || !mapRef.current) return;
+    // Buat kontrol routing baru
+    const routingControl = L.Routing.control({
+      router: L.Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1',
+        profile: 'car'
+      }),
+      waypoints: [
+        L.latLng(userLocation.lat, userLocation.lng),
+        L.latLng(lotData.latitude, lotData.longitude)
+      ],
+      lineOptions: {
+        styles: [{ color: '#1976d2', weight: 6, opacity: 0.8 }]
+      },
+      show: false,
+      addWaypoints: false
+    }).addTo(map);
 
-    if (routingControlRef.current) {
-      mapRef.current.removeControl(routingControlRef.current);
-      routingControlRef.current = null;
-    }
+    // Sesuaikan view peta agar kedua titik terlihat
+    map.fitBounds([
+      [userLocation.lat, userLocation.lng],
+      [lotData.latitude, lotData.longitude]
+    ]);
 
-    const routingControl = L.Routing.control({
-      router: L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile: 'car'
-      }),
-      waypoints: [
-        L.latLng(userLocation.lat, userLocation.lng),
-        L.latLng(lotData.latitude, lotData.longitude)
-      ],
-      lineOptions: {
-        styles: [{ color: '#1976d2', weight: 6, opacity: 0.8 }]
-      },
-      show: false,
-      addWaypoints: false
-    }).addTo(mapRef.current);
+    // Kembalikan fungsi cleanup.
+    // Fungsi ini akan otomatis dijalankan oleh React sebelum useEffect berjalan lagi
+    // (misalnya saat lotData berubah) atau saat komponen di-unmount.
+    return () => {
+      if (map && routingControl) {
+        map.removeControl(routingControl);
+      }
+    };
+  }, [lotData, userLocation]); // Efek ini bergantung pada lotData dan userLocation
 
-    routingControlRef.current = routingControl;
+  if (locationError) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        <AlertTitle>Error Lokasi</AlertTitle>
+        {locationError}
+      </Alert>
+    );
+  }
 
-    mapRef.current.fitBounds([
-      [userLocation.lat, userLocation.lng],
-      [lotData.latitude, lotData.longitude]
-    ]);
+  if (!userLocation) {
+    return (
+      <Card sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Skeleton variant="circular" width={60} height={60} sx={{ mx: 'auto', mb: 2 }} />
+          <Typography>Mendeteksi lokasi Anda...</Typography>
+        </Box>
+      </Card>
+    );
+  }
 
-    return () => {
-      if (routingControlRef.current && mapRef.current) {
-        mapRef.current.removeControl(routingControlRef.current);
-      }
-    };
-  }, [lotData, userLocation]);
+  return (
+    <Card sx={{ overflow: 'hidden', position: 'relative' }}>
+      {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }} />}
+      <MapContainer
+        center={[userLocation.lat, userLocation.lng]}
+        zoom={15}
+        style={{ height: '400px', width: '100%' }}
+        ref={mapRef}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
+        />
 
-  if (locationError) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        <AlertTitle>Error Lokasi</AlertTitle>
-        {locationError}
-      </Alert>
-    );
-  }
+        <Marker position={[userLocation.lat, userLocation.lng]} icon={ICONS.user}>
+          <Popup>
+            <Box sx={{ p: 1, textAlign: 'center' }}>
+              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
+                📍 Lokasi Anda
+              </Typography>
+              <Typography variant="caption">
+                {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+              </Typography>
+            </Box>
+          </Popup>
+        </Marker>
 
-  if (!userLocation) {
-    return (
-      <Card sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Skeleton variant="circular" width={60} height={60} sx={{ mx: 'auto', mb: 2 }} />
-          <Typography>Mendeteksi lokasi Anda...</Typography>
-        </Box>
-      </Card>
-    );
-  }
-
-  return (
-    <Card sx={{ overflow: 'hidden', position: 'relative' }}>
-      {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }} />}
-      <MapContainer
-        center={[userLocation.lat, userLocation.lng]}
-        zoom={15}
-        style={{ height: '400px', width: '100%' }}
-        ref={mapRef}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
-        />
-
-        <Marker position={[userLocation.lat, userLocation.lng]} icon={ICONS.user}>
-          <Popup>
-            <Box sx={{ p: 1, textAlign: 'center' }}>
-              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                📍 Lokasi Anda
-              </Typography>
-              <Typography variant="caption">
-                {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-              </Typography>
-            </Box>
-          </Popup>
-        </Marker>
-
-        {lotData && (
-          <Marker position={[lotData.latitude, lotData.longitude]} icon={ICONS.material}>
-            <Popup>
-              <Box sx={{ p: 1.5, minWidth: 200 }}>
-                <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  🏭 {lotData.Nama_plat}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Lot:</strong> {lotData.Lot_Batch_Number}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Lokasi:</strong> {lotData.Nama_Lokasi}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Kuantitas:</strong> {lotData.Kuantitas?.toLocaleString()} unit
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {lotData.latitude.toFixed(6)}, {lotData.longitude.toFixed(6)}
-                </Typography>
-              </Box>
-            </Popup>
-          </Marker>
-        )}
-      </MapContainer>
-    </Card>
-  );
+        {lotData && (
+          <Marker position={[lotData.latitude, lotData.longitude]} icon={ICONS.material}>
+            <Popup>
+              <Box sx={{ p: 1.5, minWidth: 200 }}>
+                <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  🏭 {lotData.Nama_plat}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Lot:</strong> {lotData.Lot_Batch_Number}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Lokasi:</strong> {lotData.Nama_Lokasi}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Kuantitas:</strong> {lotData.Kuantitas?.toLocaleString()} unit
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {lotData.latitude.toFixed(6)}, {lotData.longitude.toFixed(6)}
+                </Typography>
+              </Box>
+            </Popup>
+          </Marker>
+        )}
+      </MapContainer>
+    </Card>
+  );
 });
 
 MapComponent.displayName = 'MapComponent';
@@ -597,7 +599,7 @@ const UserDashboard = () => {
                     background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
                   }}>
                     <TableRow>
-                      {['ID', 'Material', 'Tujuan', 'Jumlah', 'Tanggal', 'Status', 'Aksi'].map((header) => (
+                      {['ID', 'Material', 'Lot Batch Number', 'Tujuan', 'Jumlah', 'Tanggal', 'Status', 'Aksi'].map((header) => (
                         <TableCell key={header} sx={{ color: 'white', fontWeight: 600 }}>
                           {header}
                         </TableCell>
@@ -610,6 +612,7 @@ const UserDashboard = () => {
                         <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.05)' } }}>
                           <TableCell sx={{ fontWeight: 500 }}>{dist.ID_Distribusi}</TableCell>
                           <TableCell>{dist.Nama_plat}</TableCell>
+                          <TableCell>{dist.Lot_Batch_Number}</TableCell> {/* Added Lot_Batch_Number */}
                           <TableCell>{dist.Nama_Lokasi}</TableCell>
                           <TableCell sx={{ fontWeight: 500 }}>{dist.Jumlah?.toLocaleString()}</TableCell>
                           <TableCell>
@@ -635,7 +638,7 @@ const UserDashboard = () => {
                     ))}
                     {distribusi.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}> {/* Updated colspan */}
                           <Typography color="text.secondary">
                             {loading ? 'Memuat data...' : 'Tidak ada data distribusi'}
                           </Typography>
@@ -765,7 +768,7 @@ const UserDashboard = () => {
                           {dist.Nama_plat}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {dist.Nama_Lokasi} • {new Date(dist.Tanggal_permintaan).toLocaleDateString('id-ID')}
+                          Lot: {dist.Lot_Batch_Number} • {dist.Nama_Lokasi} • {new Date(dist.Tanggal_permintaan).toLocaleDateString('id-ID')}
                         </Typography>
                       </Box>
                       {getStatusChip(dist.Status)}

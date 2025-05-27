@@ -7,7 +7,7 @@ import {
   Typography,
   Link,
   Box,
-  Card,
+  // Card, // Not used, can be removed
   CardContent,
   InputAdornment,
   IconButton,
@@ -23,19 +23,20 @@ import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
+// import GoogleIcon from '@mui/icons-material/Google'; // Removed
+// import FacebookIcon from '@mui/icons-material/Facebook'; // Removed
 import AuthService from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode'; // Keep if jwtDecode is used elsewhere, otherwise remove
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Keep if used for responsive adjustments
 
+  // Function to handle form submission (login)
   const handleSubmit = async (e) => {
     e.preventDefault();
   
@@ -43,21 +44,80 @@ const Login = () => {
       const user = await AuthService.login(formData.email, formData.password);
       console.log('LOGIN USER:', user);
   
-      alert(`Login berhasil sebagai ${user.username} (${user.role})`);
-  
+      // Removed the success message box
+      // const messageBox = document.createElement('div');
+      // messageBox.style.cssText = `
+      //   position: fixed;
+      //   top: 20px; /* Changed from 50% to 20px */
+      //   left: 50%;
+      //   transform: translateX(-50%); /* Changed from translate(-50%, -50%) */
+      //   background-color: #4CAF50;
+      //   color: white;
+      //   padding: 15px 30px;
+      //   border-radius: 8px;
+      //   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      //   z-index: 1000;
+      //   text-align: center;
+      // `;
+      // messageBox.innerHTML = `Login berhasil sebagai ${user.username} (${user.role})`;
+      // document.body.appendChild(messageBox);
+
+      // setTimeout(() => {
+      //   document.body.removeChild(messageBox);
+      // }, 3000); // Remove message after 3 seconds
+
       if (user.role === 'admin') {
         navigate('/admin');
       } else if (user.role === 'user') {
         navigate('/user');
       } else {
-        alert('Role tidak valid');
+        // Using a custom message box for invalid role
+        const errorMessage = document.createElement('div');
+        errorMessage.style.cssText = `
+          position: fixed;
+          top: 20px; /* Changed from 50% to 20px */
+          left: 50%;
+          transform: translateX(-50%); /* Changed from translate(-50%, -50%) */
+          background-color: #f44336;
+          color: white;
+          padding: 15px 30px;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          z-index: 1000;
+          text-align: center;
+        `;
+        errorMessage.innerHTML = 'Role tidak valid';
+        document.body.appendChild(errorMessage);
+        setTimeout(() => {
+          document.body.removeChild(errorMessage);
+        }, 3000);
       }
     } catch (error) {
       console.error('Login gagal:', error);
-      alert('Login gagal. Periksa email dan password.');
+      // Using a custom message box for login failure
+      const errorMessage = document.createElement('div');
+      errorMessage.style.cssText = `
+        position: fixed;
+        top: 20px; /* Changed from 50% to 20px */
+        left: 50%;
+        transform: translateX(-50%); /* Changed from translate(-50%, -50%) */
+        background-color: #f44336;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 1000;
+        text-align: center;
+      `;
+      errorMessage.innerHTML = 'Login gagal. Periksa email dan password.';
+      document.body.appendChild(errorMessage);
+      setTimeout(() => {
+        document.body.removeChild(errorMessage);
+      }, 3000);
     }
   };
 
+  // Function to toggle password visibility
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
@@ -70,20 +130,21 @@ const Login = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '100vh',
+          minHeight: '100vh', // Center content vertically on the page
         }}
       >
         <Paper 
-          elevation={6}
+          elevation={6} // Add shadow to the card
           sx={{
             width: '100%',
-            borderRadius: 4,
-            overflow: 'hidden',
+            borderRadius: 4, // Rounded corners for the paper
+            overflow: 'hidden', // Ensures content respects border radius
           }}
         >
+          {/* Header section with app name and icon */}
           <Box
             sx={{
-              bgcolor: 'primary.main',
+              bgcolor: 'primary.main', // Primary color background
               py: 3,
               display: 'flex',
               flexDirection: 'column',
@@ -101,8 +162,10 @@ const Login = () => {
             </Typography>
           </Box>
 
+          {/* Login form content */}
           <CardContent sx={{ p: 4 }}>
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+              {/* Email Input */}
               <TextField
                 margin="normal"
                 required
@@ -124,6 +187,7 @@ const Login = () => {
                 sx={{ mb: 2 }}
                 variant="outlined"
               />
+              {/* Password Input */}
               <TextField
                 margin="normal"
                 required
@@ -157,6 +221,7 @@ const Login = () => {
                 variant="outlined"
               />
               
+              {/* Remember Me and Forgot Password links */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <FormControlLabel
                   control={<Checkbox value="remember" color="primary" />}
@@ -167,6 +232,7 @@ const Login = () => {
                 </Link>
               </Box>
               
+              {/* Login Button */}
               <Button
                 type="submit"
                 fullWidth
@@ -184,39 +250,7 @@ const Login = () => {
                 Masuk
               </Button>
 
-              <Divider sx={{ my: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Atau masuk dengan
-                </Typography>
-              </Divider>
-
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<GoogleIcon />}
-                  sx={{ 
-                    borderRadius: 2,
-                    py: 1,
-                    flex: 1,
-                    textTransform: 'none'
-                  }}
-                >
-                  Google
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<FacebookIcon />}
-                  sx={{ 
-                    borderRadius: 2,
-                    py: 1,
-                    flex: 1,
-                    textTransform: 'none'
-                  }}
-                >
-                  Facebook
-                </Button>
-              </Box>
-
+              {/* Link to Register page */}
               <Box sx={{ mt: 3, textAlign: 'center' }}>
                 <Typography variant="body2">
                   Belum punya akun?{' '}

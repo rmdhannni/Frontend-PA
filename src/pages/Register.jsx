@@ -6,16 +6,11 @@ import {
   Typography,
   Link,
   Box,
-  Card,
   CardContent,
   InputAdornment,
   IconButton,
   Paper,
-  Divider,
   Avatar,
-  Step,
-  StepLabel,
-  Stepper,
   useTheme,
   useMediaQuery
 } from '@mui/material';
@@ -25,18 +20,16 @@ import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AuthService from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
-  const [formData, setFormData] = useState({ 
-    email: '', 
-    username: '', 
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
     password: '',
-    confirmPassword: '' 
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -47,12 +40,12 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Password tidak cocok');
       return;
     }
-    
+
     try {
       await AuthService.register({
         email: formData.email,
@@ -77,7 +70,7 @@ const Register = () => {
   const handlePasswordChange = (e) => {
     const newPassword = e.target.value;
     setFormData({ ...formData, password: newPassword });
-    
+
     // Reset error when typing
     if (passwordError && formData.confirmPassword === newPassword) {
       setPasswordError('');
@@ -87,7 +80,7 @@ const Register = () => {
   const handleConfirmPasswordChange = (e) => {
     const confirmPassword = e.target.value;
     setFormData({ ...formData, confirmPassword: confirmPassword });
-    
+
     if (formData.password !== confirmPassword) {
       setPasswordError('Password tidak cocok');
     } else {
@@ -112,7 +105,7 @@ const Register = () => {
           minHeight: '100vh',
         }}
       >
-        <Paper 
+        <Paper
           elevation={6}
           sx={{
             width: '100%',
@@ -163,7 +156,7 @@ const Register = () => {
                 sx={{ mb: 2 }}
                 variant="outlined"
               />
-              
+
               <TextField
                 margin="normal"
                 required
@@ -184,7 +177,7 @@ const Register = () => {
                 sx={{ mb: 2 }}
                 variant="outlined"
               />
-              
+
               <TextField
                 margin="normal"
                 required
@@ -216,7 +209,7 @@ const Register = () => {
                 sx={{ mb: 2 }}
                 variant="outlined"
               />
-              
+
               <TextField
                 margin="normal"
                 required
@@ -250,46 +243,46 @@ const Register = () => {
                 sx={{ mb: 2 }}
                 variant="outlined"
               />
-              
+
               {formData.password && (
                 <Box sx={{ mb: 2, mt: 1 }}>
                   <Typography variant="body2" sx={{ mb: 1 }}>Kekuatan Password:</Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <CheckCircleOutlineIcon 
-                        fontSize="small" 
-                        color={hasLowerCase ? "success" : "disabled"} 
-                        sx={{ mr: 1 }} 
+                      <CheckCircleOutlineIcon
+                        fontSize="small"
+                        color={hasLowerCase ? "success" : "disabled"}
+                        sx={{ mr: 1 }}
                       />
                       <Typography variant="body2" color={hasLowerCase ? "textPrimary" : "textSecondary"}>
                         Minimal 1 huruf kecil
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <CheckCircleOutlineIcon 
-                        fontSize="small" 
-                        color={hasUpperCase ? "success" : "disabled"} 
-                        sx={{ mr: 1 }} 
+                      <CheckCircleOutlineIcon
+                        fontSize="small"
+                        color={hasUpperCase ? "success" : "disabled"}
+                        sx={{ mr: 1 }}
                       />
                       <Typography variant="body2" color={hasUpperCase ? "textPrimary" : "textSecondary"}>
                         Minimal 1 huruf besar
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <CheckCircleOutlineIcon 
-                        fontSize="small" 
-                        color={hasNumber ? "success" : "disabled"} 
-                        sx={{ mr: 1 }} 
+                      <CheckCircleOutlineIcon
+                        fontSize="small"
+                        color={hasNumber ? "success" : "disabled"}
+                        sx={{ mr: 1 }}
                       />
                       <Typography variant="body2" color={hasNumber ? "textPrimary" : "textSecondary"}>
                         Minimal 1 angka
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <CheckCircleOutlineIcon 
-                        fontSize="small" 
-                        color={hasMinLength ? "success" : "disabled"} 
-                        sx={{ mr: 1 }} 
+                      <CheckCircleOutlineIcon
+                        fontSize="small"
+                        color={hasMinLength ? "success" : "disabled"}
+                        sx={{ mr: 1 }}
                       />
                       <Typography variant="body2" color={hasMinLength ? "textPrimary" : "textSecondary"}>
                         Minimal 8 karakter
@@ -298,14 +291,14 @@ const Register = () => {
                   </Box>
                 </Box>
               )}
-              
+
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ 
-                  mt: 2, 
-                  mb: 3, 
+                sx={{
+                  mt: 2,
+                  mb: 3,
                   py: 1.5,
                   borderRadius: 2,
                   fontWeight: 'bold',
@@ -315,39 +308,6 @@ const Register = () => {
               >
                 Daftar Sekarang
               </Button>
-
-              <Divider sx={{ my: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Atau daftar dengan
-                </Typography>
-              </Divider>
-
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<GoogleIcon />}
-                  sx={{ 
-                    borderRadius: 2,
-                    py: 1,
-                    flex: 1,
-                    textTransform: 'none'
-                  }}
-                >
-                  Google
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<FacebookIcon />}
-                  sx={{ 
-                    borderRadius: 2,
-                    py: 1,
-                    flex: 1,
-                    textTransform: 'none'
-                  }}
-                >
-                  Facebook
-                </Button>
-              </Box>
 
               <Box sx={{ mt: 3, textAlign: 'center' }}>
                 <Typography variant="body2">

@@ -3,7 +3,7 @@ import {
   AppBar, 
   Toolbar, 
   Typography, 
-  Button, 
+  // Button, // Not used, can be removed
   IconButton, 
   Box, 
   Menu, 
@@ -18,8 +18,8 @@ import { useNavigate } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import SettingsIcon from '@mui/icons-material/Settings';
+// import NotificationsIcon from '@mui/icons-material/Notifications'; // Removed
+// import SettingsIcon from '@mui/icons-material/Settings'; // Removed
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 
@@ -30,19 +30,23 @@ const Navbar = ({ title, onMenuClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
 
+  // Function to open the profile menu
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
+  // Function to close the profile menu
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
+  // Function to handle user logout
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    localStorage.removeItem('token'); // Remove token from local storage
+    navigate('/login'); // Redirect to login page
   };
 
+  // Function to toggle dark mode (visual only, no actual theme implementation)
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     // Here you would implement actual theme switching functionality
@@ -52,14 +56,15 @@ const Navbar = ({ title, onMenuClick }) => {
     <AppBar 
       position="fixed" 
       sx={{ 
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)',
-        backgroundColor: darkMode ? '#333' : '#fff',
-        color: darkMode ? '#fff' : '#333',
+        zIndex: (theme) => theme.zIndex.drawer + 1, // Ensure AppBar is above the Drawer
+        boxShadow: '0 4px 12px 0 rgba(0,0,0,0.05)', // Subtle shadow for depth
+        backgroundColor: darkMode ? '#333' : '#fff', // Dynamic background based on dark mode
+        color: darkMode ? '#fff' : '#333', // Dynamic text color based on dark mode
       }}
     >
       <Toolbar>
         {isMobile && (
+          // Menu icon for mobile view to open the sidebar
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -71,6 +76,7 @@ const Navbar = ({ title, onMenuClick }) => {
           </IconButton>
         )}
         
+        {/* Title of the current page/dashboard */}
         <Typography 
           variant="h6" 
           noWrap 
@@ -85,7 +91,9 @@ const Navbar = ({ title, onMenuClick }) => {
           {title || 'Dashboard'}
         </Typography>
         
+        {/* Right-aligned icons and profile menu */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* Dark/Light Mode Toggle */}
           <Tooltip title={darkMode ? "Light Mode" : "Dark Mode"}>
             <IconButton 
               color="inherit" 
@@ -96,18 +104,10 @@ const Navbar = ({ title, onMenuClick }) => {
             </IconButton>
           </Tooltip>
           
-          <Tooltip title="Notifications">
-            <IconButton color="inherit" sx={{ mx: 1 }}>
-              <NotificationsIcon />
-            </IconButton>
-          </Tooltip>
+          {/* Removed Notifications Icon */}
+          {/* Removed Settings Icon */}
           
-          <Tooltip title="Settings">
-            <IconButton color="inherit" sx={{ mx: 1 }}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-          
+          {/* Profile Avatar and Menu Trigger */}
           <Tooltip title="Account">
             <IconButton
               onClick={handleProfileMenuOpen}
@@ -118,7 +118,7 @@ const Navbar = ({ title, onMenuClick }) => {
                 sx={{ 
                   width: 36, 
                   height: 36,
-                  bgcolor: 'primary.main'
+                  bgcolor: 'primary.main' // Use primary theme color for avatar background
                 }}
               >
                 <AccountCircleIcon />
@@ -128,6 +128,7 @@ const Navbar = ({ title, onMenuClick }) => {
         </Box>
       </Toolbar>
       
+      {/* Profile Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -139,7 +140,7 @@ const Navbar = ({ title, onMenuClick }) => {
             mt: 1.5,
             borderRadius: 2,
             overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))', // Shadow for menu
             '&:before': {
               content: '""',
               display: 'block',
@@ -149,7 +150,7 @@ const Navbar = ({ title, onMenuClick }) => {
               width: 10,
               height: 10,
               bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
+              transform: 'translateY(-50%) rotate(45deg)', // Arrow pointing to the avatar
               zIndex: 0,
             },
           },
@@ -157,20 +158,26 @@ const Navbar = ({ title, onMenuClick }) => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+        {/* User Info in the Menu */}
         <Box sx={{ p: 2, pb: 1 }}>
           <Typography variant="subtitle1" fontWeight="bold">Admin User</Typography>
           <Typography variant="body2" color="text.secondary">admin@example.com</Typography>
         </Box>
-        <Divider />
+        <Divider /> {/* Divider after user info */}
+        
+        {/* Profile Link */}
         <MenuItem onClick={() => navigate('/profile')}>
           <AccountCircleIcon fontSize="small" sx={{ mr: 2 }} />
           Profile
         </MenuItem>
-        <MenuItem onClick={() => navigate('/settings')}>
+        {/* Removed Settings Link */}
+        {/* <MenuItem onClick={() => navigate('/settings')}>
           <SettingsIcon fontSize="small" sx={{ mr: 2 }} />
           Settings
-        </MenuItem>
-        <Divider />
+        </MenuItem> */}
+        <Divider /> {/* Divider before logout */}
+        
+        {/* Logout Button */}
         <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
           <LogoutIcon fontSize="small" sx={{ mr: 2 }} />
           Logout

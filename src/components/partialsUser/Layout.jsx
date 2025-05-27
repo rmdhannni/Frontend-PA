@@ -37,12 +37,13 @@ const Layout = ({ activeTab, setActiveTab, onAddButtonClick, children }) => {
           // Menyesuaikan margin-top agar konten tidak tertutup Navbar yang lebih tinggi
           // Nilai ini harus cocok atau sedikit lebih besar dari height Navbar
           mt: { xs: '80px', sm: '100px' }, // Contoh: Sesuaikan dengan tinggi Navbar baru (xs: mobile, sm: desktop)
+          mb: '120px', // Menambahkan margin-bottom untuk memberikan ruang bagi footer sticky
           width: { xs: '100%', md: 'calc(100% - 250px)' }, // Mengatur lebar konten utama (dikurangi lebar sidebar di desktop)
           ml: { xs: 0, md: '250px' }, // Mengatur margin-left agar konten bergeser jika sidebar permanen
           transition: 'margin 0.3s ease-in-out', // Animasi halus saat sidebar buka/tutup
         }}
       >
-        <Container maxWidth="xl" sx={{ mb: 4 }}> {/* Memberikan lebar maksimum dan margin bawah sebelum footer */}
+        <Container maxWidth="xl"> {/* Menghilangkan mb: 4 karena sudah ada margin-bottom di parent */}
           {children} {/* Ini adalah konten dinamis dari halaman (misal: Dashboard, Tracking, History) */}
         </Container>
       </Box>
@@ -53,7 +54,7 @@ const Layout = ({ activeTab, setActiveTab, onAddButtonClick, children }) => {
           color="primary"
           sx={{
             position: 'fixed',
-            bottom: 24,
+            bottom: 144, // Disesuaikan agar tidak tertutup footer (120px footer height + 24px spacing)
             right: 24,
             display: { xs: 'flex', md: 'none' }, // Hanya tampil di layar kecil
             zIndex: (theme) => theme.zIndex.speedDial, // Memastikan FAB di atas elemen lain

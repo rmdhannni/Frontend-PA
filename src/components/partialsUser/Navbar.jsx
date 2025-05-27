@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Box, Avatar, Button } from '@mui/material'; // Hapus Badge
-import { Menu as MenuIcon, Person as PersonIcon, Logout as LogoutIcon } from '@mui/icons-material'; // Hapus NotificationsIcon
+import { AppBar, Toolbar, IconButton, Typography, Box, Avatar, Button } from '@mui/material';
+import { Menu as MenuIcon, Person as PersonIcon, Logout as LogoutIcon } from '@mui/icons-material';
 import { useTheme, useMediaQuery } from '@mui/material';
 
 import PtPalLogo from '../../assets/logo-pt-pal.png' // Pastikan path ini benar
@@ -11,17 +11,40 @@ const useResponsive = () => {
   return { isMobile };
 };
 
-const Navbar = ({ onMenuToggle, user }) => {
+const Navbar = ({ onMenuToggle, user, onLogout }) => {
   const responsive = useResponsive();
 
-  // Fungsi placeholder untuk logout.
-  // Anda perlu mengimplementasikan logika logout yang sebenarnya di sini,
-  // misalnya dengan menghapus token sesi, mengarahkan ke halaman login, dll.
+  // Fungsi logout yang sudah diperbaiki
   const handleLogout = () => {
-    // Contoh: Logika logout (misalnya, menghapus token, mengarahkan ke halaman login)
-    console.log("User logged out!");
-    // window.location.href = '/login'; // Contoh pengalihan ke halaman login
-    alert("Anda telah logout."); // Ganti dengan modal atau snackbar di aplikasi nyata
+    try {
+      // 1. Hapus token dari localStorage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      
+      // 2. Hapus token dari sessionStorage (jika ada)
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('user');
+      
+      // 3. Clear any cookies (jika menggunakan cookies untuk auth)
+      document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      
+      // 4. Panggil callback onLogout dari parent component
+      if (onLogout && typeof onLogout === 'function') {
+        onLogout();
+      }
+      
+      // 5. Redirect ke halaman login
+      // Gunakan window.location.replace untuk mencegah user kembali dengan tombol back
+      window.location.replace('/login');
+      
+      console.log("User berhasil logout!");
+      
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Tetap redirect ke login meskipun ada error
+      window.location.replace('/login');
+    }
   };
 
   return (
@@ -29,7 +52,7 @@ const Navbar = ({ onMenuToggle, user }) => {
       background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
       backdropFilter: 'blur(10px)',
       zIndex: (theme) => theme.zIndex.drawer + 1,
-      borderRadius: 0, // Menghilangkan border-radius
+      borderRadius: 0,
     }}>
       <Toolbar disableGutters>
         <IconButton
@@ -41,15 +64,15 @@ const Navbar = ({ onMenuToggle, user }) => {
           <MenuIcon />
         </IconButton>
 
-        {/* Logo PT PAL Indonesia - Ukuran disesuaikan dan padding diperkecil */}
+        {/* Logo PT PAL Indonesia */}
         <Box
           component="img"
           src={PtPalLogo}
           alt="PT PAL Indonesia Logo"
           sx={{
-            height: { xs: 80, sm: 100 }, // Sesuaikan ukuran logo sesuai preferensi Anda
-            width: 'auto', // PENTING: Menjaga rasio aspek logo agar tidak gepeng
-            ml: { xs: 0.5, sm: 1 }, // Padding kiri logo
+            height: { xs: 80, sm: 100 },
+            width: 'auto',
+            ml: { xs: 0.5, sm: 1 },
             mr: 2,
             filter: 'brightness(0) invert(1)',
           }}
@@ -60,35 +83,47 @@ const Navbar = ({ onMenuToggle, user }) => {
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, pr: { xs: 0.5, sm: 1 } }}>
-          {/* Menampilkan username yang login */}
+          {/* Avatar User */}
           <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>
             <PersonIcon />
           </Avatar>
 
+          {/* Username - hanya tampil di desktop */}
           {!responsive.isMobile && (
-            <Typography variant="body2" sx={{ ml: 1, color: 'white' }}> {/* Tambahkan color: 'white' agar teks terlihat */}
-              {user?.username || 'User'} {/* Menggunakan user.username */}
+            <Typography variant="body2" sx={{ ml: 1, color: 'white' }}>
+              {user?.username || 'User'}
             </Typography>
           )}
 
-          {/* Tombol Logout */}
+          {/* Tombol Logout - Desktop/Tablet */}
           <Button
-            color="inherit" // Menggunakan warna inherit agar sesuai dengan AppBar
+            color="inherit"
             onClick={handleLogout}
             startIcon={<LogoutIcon />}
             sx={{
               textTransform: 'none',
               fontWeight: 500,
               borderRadius: 2,
-              display: { xs: 'none', sm: 'flex' } // Tampilkan di desktop/tablet, sembunyikan di mobile jika perlu ruang
+              display: { xs: 'none', sm: 'flex' },
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }
             }}
           >
-            {!responsive.isMobile && "Logout"} {/* Tampilkan teks "Logout" hanya di non-mobile */}
+            Logout
           </Button>
 
-          {/* Jika ingin tombol logout hanya ikon di mobile */}
+          {/* Tombol Logout - Mobile (hanya ikon) */}
           {responsive.isMobile && (
-            <IconButton color="inherit" onClick={handleLogout}>
+            <IconButton 
+              color="inherit" 
+              onClick={handleLogout}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                }
+              }}
+            >
               <LogoutIcon />
             </IconButton>
           )}
