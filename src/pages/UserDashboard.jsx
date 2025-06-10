@@ -18,17 +18,14 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import { getCurrentUser } from '../utils/auth';
 import { createTheme, ThemeProvider, useTheme, useMediaQuery } from '@mui/material/styles';
-
-// Import Layout component
 import Layout from '../components/partialsUser/Layout';
 
 const BASE_URL = 'http://localhost:3000';
 
-// Custom theme
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2', // Main blue
+      main: '#1976d2',
       light: '#42a5f5',
       dark: '#1565c0',
       contrastText: '#ffffff',
@@ -94,7 +91,6 @@ const theme = createTheme({
   },
 });
 
-// Constants for optimization
 const SURABAYA_BOUNDS = L.latLngBounds(
   L.latLng(-7.35, 112.6),
   L.latLng(-7.1, 112.9)
@@ -121,7 +117,6 @@ const STATUS_CONFIG = {
   ditolak: { label: 'Ditolak', color: 'error', icon: <CancelIcon fontSize="small" /> }
 };
 
-// Fix Leaflet marker icons
 if (!L.Icon.Default.prototype._getIconUrl) {
   delete L.Icon.Default.prototype._getIconUrl;
   L.Icon.Default.mergeOptions({
@@ -131,7 +126,6 @@ if (!L.Icon.Default.prototype._getIconUrl) {
   });
 }
 
-// Hook for geolocation
 const useGeolocation = () => {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
@@ -166,11 +160,9 @@ const useGeolocation = () => {
       options
     );
   }, []);
-
   return { location, error, loading };
 };
 
-// StatCard Component
 const StatCard = ({ title, value, icon, color, trend }) => {
   return (
     <Grow in timeout={500}>
@@ -211,139 +203,129 @@ const StatCard = ({ title, value, icon, color, trend }) => {
   );
 };
 
-// MapComponent
 const MapComponent = React.memo(({ lotData, loading }) => {
-  const mapRef = useRef();
-  const { location: userLocation, error: locationError } = useGeolocation();
+  const mapRef = useRef();
+  const { location: userLocation, error: locationError } = useGeolocation();
 
-  useEffect(() => {
-    if (!mapRef.current || !userLocation) return;
-    const map = mapRef.current;
-    map.setView([userLocation.lat, userLocation.lng], 15);
-    map.setMaxBounds(SURABAYA_BOUNDS);
-    map.setMinZoom(12);
-    map.setMaxZoom(19);
-  }, [userLocation]);
+  useEffect(() => {
+    if (!mapRef.current || !userLocation) return;
+    const map = mapRef.current;
+    map.setView([userLocation.lat, userLocation.lng], 15);
+    map.setMaxBounds(SURABAYA_BOUNDS);
+    map.setMinZoom(12);
+    map.setMaxZoom(19);
+  }, [userLocation]);
 
-  // ✨ useEffect untuk menggambar rute telah diperbaiki di sini ✨
-  useEffect(() => {
-    // Jika tidak ada data lokasi material atau lokasi user, jangan lakukan apa-apa
-    if (!lotData || !userLocation || !mapRef.current) return;
+  useEffect(() => {
+    if (!lotData || !userLocation || !mapRef.current) return;
 
-    // Dapatkan instance map dari ref
     const map = mapRef.current;
 
-    // Buat kontrol routing baru
-    const routingControl = L.Routing.control({
-      router: L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile: 'car'
-      }),
-      waypoints: [
-        L.latLng(userLocation.lat, userLocation.lng),
-        L.latLng(lotData.latitude, lotData.longitude)
-      ],
-      lineOptions: {
-        styles: [{ color: '#1976d2', weight: 6, opacity: 0.8 }]
-      },
-      show: false,
-      addWaypoints: false
-    }).addTo(map);
+    const routingControl = L.Routing.control({
+      router: L.Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1',
+        profile: 'car'
+      }),
+      waypoints: [
+        L.latLng(userLocation.lat, userLocation.lng),
+        L.latLng(lotData.latitude, lotData.longitude)
+      ],
+      lineOptions: {
+        styles: [{ color: '#1976d2', weight: 6, opacity: 0.8 }]
+      },
+      show: false,
+      addWaypoints: false
+    }).addTo(map);
 
-    // Sesuaikan view peta agar kedua titik terlihat
-    map.fitBounds([
-      [userLocation.lat, userLocation.lng],
-      [lotData.latitude, lotData.longitude]
-    ]);
+    map.fitBounds([
+      [userLocation.lat, userLocation.lng],
+      [lotData.latitude, lotData.longitude]
+    ]);
 
-    // Kembalikan fungsi cleanup.
-    // Fungsi ini akan otomatis dijalankan oleh React sebelum useEffect berjalan lagi
-    // (misalnya saat lotData berubah) atau saat komponen di-unmount.
-    return () => {
-      if (map && routingControl) {
-        map.removeControl(routingControl);
-      }
-    };
-  }, [lotData, userLocation]); // Efek ini bergantung pada lotData dan userLocation
+    return () => {
+      if (map && routingControl) {
+        map.removeControl(routingControl);
+      }
+    };
+  }, [lotData, userLocation]);
 
-  if (locationError) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        <AlertTitle>Error Lokasi</AlertTitle>
-        {locationError}
-      </Alert>
-    );
-  }
+  if (locationError) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        <AlertTitle>Error Lokasi</AlertTitle>
+        {locationError}
+      </Alert>
+    );
+  }
 
-  if (!userLocation) {
-    return (
-      <Card sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Skeleton variant="circular" width={60} height={60} sx={{ mx: 'auto', mb: 2 }} />
-          <Typography>Mendeteksi lokasi Anda...</Typography>
-        </Box>
-      </Card>
-    );
-  }
+  if (!userLocation) {
+    return (
+      <Card sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Skeleton variant="circular" width={60} height={60} sx={{ mx: 'auto', mb: 2 }} />
+          <Typography>Mendeteksi lokasi Anda...</Typography>
+        </Box>
+      </Card>
+    );
+  }
 
-  return (
-    <Card sx={{ overflow: 'hidden', position: 'relative' }}>
-      {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }} />}
-      <MapContainer
-        center={[userLocation.lat, userLocation.lng]}
-        zoom={15}
-        style={{ height: '400px', width: '100%' }}
-        ref={mapRef}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
-        />
+  return (
+    <Card sx={{ overflow: 'hidden', position: 'relative' }}>
+      {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }} />}
+      <MapContainer
+        center={[userLocation.lat, userLocation.lng]}
+        zoom={15}
+        style={{ height: '400px', width: '100%' }}
+        ref={mapRef}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
+        />
 
-        <Marker position={[userLocation.lat, userLocation.lng]} icon={ICONS.user}>
-          <Popup>
-            <Box sx={{ p: 1, textAlign: 'center' }}>
-              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                📍 Lokasi Anda
-              </Typography>
-              <Typography variant="caption">
-                {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-              </Typography>
-            </Box>
-          </Popup>
-        </Marker>
+        <Marker position={[userLocation.lat, userLocation.lng]} icon={ICONS.user}>
+          <Popup>
+            <Box sx={{ p: 1, textAlign: 'center' }}>
+              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
+                📍 Lokasi Anda
+              </Typography>
+              <Typography variant="caption">
+                {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+              </Typography>
+            </Box>
+          </Popup>
+        </Marker>
 
-        {lotData && (
-          <Marker position={[lotData.latitude, lotData.longitude]} icon={ICONS.material}>
-            <Popup>
-              <Box sx={{ p: 1.5, minWidth: 200 }}>
-                <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                  🏭 {lotData.Nama_plat}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Lot:</strong> {lotData.Lot_Batch_Number}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Lokasi:</strong> {lotData.Nama_Lokasi}
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  <strong>Kuantitas:</strong> {lotData.Kuantitas?.toLocaleString()} unit
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {lotData.latitude.toFixed(6)}, {lotData.longitude.toFixed(6)}
-                </Typography>
-              </Box>
-            </Popup>
-          </Marker>
-        )}
-      </MapContainer>
-    </Card>
-  );
+        {lotData && (
+          <Marker position={[lotData.latitude, lotData.longitude]} icon={ICONS.material}>
+            <Popup>
+              <Box sx={{ p: 1.5, minWidth: 200 }}>
+                <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  🏭 {lotData.Nama_plat}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Lot:</strong> {lotData.Lot_Batch_Number}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Lokasi:</strong> {lotData.Nama_Lokasi}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Kuantitas:</strong> {lotData.Kuantitas?.toLocaleString()} unit
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {lotData.latitude.toFixed(6)}, {lotData.longitude.toFixed(6)}
+                </Typography>
+              </Box>
+            </Popup>
+          </Marker>
+        )}
+      </MapContainer>
+    </Card>
+  );
 });
 
 MapComponent.displayName = 'MapComponent';
 
-// Main Dashboard Component
 const UserDashboard = () => {
   const [distribusi, setDistribusi] = useState([]);
   const [open, setOpen] = useState(false);
@@ -358,7 +340,6 @@ const UserDashboard = () => {
   const user = getCurrentUser();
   const userId = user?.id;
 
-  // API calls with better error handling
   const apiCall = useCallback(async (url, options = {}) => {
     try {
       const response = await axios(url, options);
@@ -376,144 +357,119 @@ const UserDashboard = () => {
     if (!userId) return;
 
     setLoading(true);
-    const result = await apiCall(`${BASE_URL}/api/distribusi/user/${userId}`);
+    const result = await apiCall(`${BASE_URL}/api/distribusi/user/${userId}`); // [cite: 294]
 
-    if (result.success) {
-      setDistribusi(result.data);
+    if (result.success) { // [cite: 294]
+      setDistribusi(result.data); // [cite: 294]
     } else {
-      alert(`Gagal memuat data distribusi: ${result.error}`);
+      alert(`Gagal memuat data distribusi: ${result.error}`); // [cite: 294]
     }
-    setLoading(false);
+    setLoading(false); // [cite: 294]
   }, [userId, apiCall]);
 
   const fetchOptions = useCallback(async () => {
     const [platResult, lokasiResult] = await Promise.all([
-      apiCall(`${BASE_URL}/api/plat`),
-      apiCall(`${BASE_URL}/api/lokasi`)
+      apiCall(`${BASE_URL}/api/plat`), // [cite: 295]
+      apiCall(`${BASE_URL}/api/lokasi`) // [cite: 295]
     ]);
 
-    if (platResult.success) setPlatOptions(platResult.data);
-    if (lokasiResult.success) setLokasiOptions(lokasiResult.data);
+    if (platResult.success) setPlatOptions(platResult.data); // [cite: 295]
+    if (lokasiResult.success) setLokasiOptions(lokasiResult.data); // [cite: 295]
 
-    if (!platResult.success || !lokasiResult.success) {
-      alert('Gagal memuat beberapa data. Silakan refresh halaman.');
+    if (!platResult.success || !lokasiResult.success) { // [cite: 295]
+      alert('Gagal memuat beberapa data. Silakan refresh halaman.'); // [cite: 295]
     }
   }, [apiCall]);
 
   const handleSearchLot = useCallback(async () => {
-    const trimmedLot = searchLot.trim();
-    if (!trimmedLot) {
-      alert('Mohon masukkan Lot Batch Number');
+    const trimmedLot = searchLot.trim(); // [cite: 296]
+    if (!trimmedLot) { // [cite: 296]
+      alert('Mohon masukkan Lot Batch Number'); // [cite: 296]
       return;
     }
 
-    setLoading(true);
-    const encodedLot = encodeURIComponent(trimmedLot);
-    const result = await apiCall(`${BASE_URL}/api/plat/lot/${encodedLot}`);
+    setLoading(true); // [cite: 296]
+    const encodedLot = encodeURIComponent(trimmedLot); // [cite: 296]
+    const result = await apiCall(`${BASE_URL}/api/plat/lot/${encodedLot}`); // [cite: 296]
 
-    if (result.success && result.data.success) {
+    if (result.success && result.data.success) { // [cite: 297]
       const processedData = {
         ...result.data.data,
-        latitude: Number(result.data.data.latitude),
-        longitude: Number(result.data.data.longitude),
-        Kuantitas: parseInt(result.data.data.Kuantitas)
+        latitude: Number(result.data.data.latitude), // [cite: 297]
+        longitude: Number(result.data.data.longitude), // [cite: 297]
+        Kuantitas: parseInt(result.data.data.Kuantitas) // [cite: 297]
       };
-      setLotData(processedData);
+      setLotData(processedData); // [cite: 297]
     } else {
-      const message = result.data?.message || result.error || 'Material tidak ditemukan';
-      alert(message);
-      setLotData(null);
+      const message = result.data?.message || result.error || 'Material tidak ditemukan'; // [cite: 297]
+      alert(message); // [cite: 297]
+      setLotData(null); // [cite: 297]
     }
-    setLoading(false);
+    setLoading(false); // [cite: 297]
   }, [searchLot, apiCall]);
 
   const handleSubmit = useCallback(async () => {
-    const { ID_Plat, ID_Lokasi_tujuan, Jumlah } = form;
+    const { ID_Plat, ID_Lokasi_tujuan, Jumlah } = form; // [cite: 298]
 
-    if (!ID_Plat || !ID_Lokasi_tujuan || !Jumlah) {
-      alert('Mohon lengkapi semua field');
+    if (!ID_Plat || !ID_Lokasi_tujuan || !Jumlah) { // [cite: 298]
+      alert('Mohon lengkapi semua field'); // [cite: 298]
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // [cite: 298]
     const payload = {
-      ID_Plat: parseInt(ID_Plat),
-      ID_Lokasi_tujuan: parseInt(ID_Lokasi_tujuan),
-      Jumlah: parseInt(Jumlah),
-      UserID: userId,
-      Tanggal_permintaan: new Date().toISOString().split('T')[0]
+      ID_Plat: parseInt(ID_Plat), // [cite: 298]
+      ID_Lokasi_tujuan: parseInt(ID_Lokasi_tujuan), // [cite: 299]
+      Jumlah: parseInt(Jumlah), // [cite: 299]
+      UserID: userId, // [cite: 299]
+      Tanggal_permintaan: new Date().toISOString().split('T')[0] // [cite: 299]
     };
 
-    const result = await apiCall(`${BASE_URL}/api/distribusi`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: payload
+    const result = await apiCall(`${BASE_URL}/api/distribusi`, { // [cite: 299]
+      method: 'POST', // [cite: 299]
+      headers: { 'Content-Type': 'application/json' }, // [cite: 299]
+      data: payload // [cite: 299]
     });
 
-    if (result.success) {
-      setOpen(false);
-      setForm({ ID_Plat: '', ID_Lokasi_tujuan: '', Jumlah: '' });
-      await fetchDistribusi();
-      alert('Permintaan distribusi berhasil dibuat');
+    if (result.success) { // [cite: 299]
+      setOpen(false); // [cite: 299]
+      setForm({ ID_Plat: '', ID_Lokasi_tujuan: '', Jumlah: '' }); // [cite: 299]
+      await fetchDistribusi(); // [cite: 299]
+      alert('Permintaan distribusi berhasil dibuat'); // [cite: 299]
     } else {
-      alert(`Gagal membuat permintaan: ${result.error}`);
+      alert(`Gagal membuat permintaan: ${result.error}`); // [cite: 300]
     }
-    setLoading(false);
+    setLoading(false); // [cite: 300]
   }, [form, userId, apiCall, fetchDistribusi]);
 
-  const handleDistribusiSelesai = useCallback(async (id) => {
-    if (!window.confirm('Apakah Anda yakin ingin menandai distribusi ini sebagai selesai?')) {
-      return;
-    }
+  // handleDistribusiSelesai dihapus karena digantikan oleh scan QR code di mobile
+  // const handleDistribusiSelesai = useCallback(async (id) => { ... });
 
-    setLoading(true);
-    const payload = {
-      status: 'terdistribusi',
-      tanggal_distribusi: new Date().toISOString().split('T')[0]
-    };
-
-    const result = await apiCall(`${BASE_URL}/api/distribusi/status/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      data: payload
-    });
-
-    if (result.success) {
-      await fetchDistribusi();
-      alert('Status distribusi berhasil diperbarui!');
-    } else {
-      alert(`Gagal memperbarui status: ${result.error}`);
-    }
-    setLoading(false);
-  }, [apiCall, fetchDistribusi]);
-
-  // Event handlers for dialog
-  const handleOpen = useCallback(() => {
-    setOpen(true);
-    fetchOptions();
+  const handleOpen = useCallback(() => { // [cite: 302]
+    setOpen(true); // [cite: 302]
+    fetchOptions(); // [cite: 302]
   }, [fetchOptions]);
 
-  const handleClose = useCallback(() => {
-    setOpen(false);
-    setForm({ ID_Plat: '', ID_Lokasi_tujuan: '', Jumlah: '' });
+  const handleClose = useCallback(() => { // [cite: 303]
+    setOpen(false); // [cite: 303]
+    setForm({ ID_Plat: '', ID_Lokasi_tujuan: '', Jumlah: '' }); // [cite: 303]
   }, []);
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+  const handleChange = useCallback((e) => { // [cite: 304]
+    const { name, value } = e.target; // [cite: 304]
+    setForm(prev => ({ ...prev, [name]: value })); // [cite: 304]
   }, []);
 
-  // Computed values with memoization
-  const countByStatus = useMemo(() => ({
-    total: distribusi.length,
-    pending: distribusi.filter(d => d.Status === 'pending').length,
-    terdistribusi: distribusi.filter(d => d.Status === 'terdistribusi').length,
-    disetujui: distribusi.filter(d => d.Status === 'disetujui').length,
-    ditolak: distribusi.filter(d => d.Status === 'ditolak').length
+  const countByStatus = useMemo(() => ({ // [cite: 305]
+    total: distribusi.length, // [cite: 305]
+    pending: distribusi.filter(d => d.Status === 'pending').length, // [cite: 305]
+    terdistribusi: distribusi.filter(d => d.Status === 'terdistribusi').length, // [cite: 305]
+    disetujui: distribusi.filter(d => d.Status === 'disetujui').length, // [cite: 305]
+    ditolak: distribusi.filter(d => d.Status === 'ditolak').length // [cite: 305]
   }), [distribusi]);
 
-  const getStatusChip = useCallback((status) => {
-    const config = STATUS_CONFIG[status] || { label: status, color: 'default', icon: null };
+  const getStatusChip = useCallback((status) => { // [cite: 306]
+    const config = STATUS_CONFIG[status] || { label: status, color: 'default', icon: null }; // [cite: 306]
     return (
       <Chip
         label={config.label}
@@ -525,45 +481,43 @@ const UserDashboard = () => {
     );
   }, []);
 
-  // Effects
-  useEffect(() => {
-    fetchDistribusi();
+  useEffect(() => { // [cite: 307]
+    fetchDistribusi(); // [cite: 307]
   }, [fetchDistribusi]);
 
-  // Render content based on active tab
-  const renderContent = () => {
+  const renderContent = () => { // [cite: 308]
     switch (activeTab) {
       case 'tracking':
         return (
           <Fade in timeout={500}>
             <Box>
               <Typography variant="h5" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <MapIcon color="primary" />
-                Pelacakan Material
+                <MapIcon color="primary" /> {/* [cite: 309] */}
+                Pelacakan Material {/* [cite: 309] */}
               </Typography>
 
               <Card sx={{ p: 3, mb: 3 }}>
                 <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
                   <TextField
-                    fullWidth
-                    label="Cari Lot Batch Number"
+                    fullWidth // [cite: 310]
+                    label="Cari Lot Batch Number" // [cite: 310]
                     variant="outlined"
                     value={searchLot}
-                    onChange={(e) => setSearchLot(e.target.value)}
-                    disabled={loading}
-                    sx={{ minWidth: 200 }}
+                    onChange={(e) => setSearchLot(e.target.value)} // [cite: 311]
+                    disabled={loading} // [cite: 311]
+                    sx={{ minWidth: 200 }} // [cite: 311]
                     InputProps={{
-                      startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                      startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} /> // [cite: 312]
                     }}
                   />
                   <Button
                     variant="contained"
-                    onClick={handleSearchLot}
-                    sx={{ minWidth: 150, height: 56 }}
-                    disabled={loading}
-                    startIcon={<SearchIcon />}
+                    onClick={handleSearchLot} // [cite: 312]
+                    sx={{ minWidth: 150, height: 56 }} // [cite: 313]
+                    disabled={loading} // [cite: 313]
+                    startIcon={<SearchIcon />} // [cite: 313]
                   >
-                    {loading ? 'Mencari...' : 'Cari'}
+                    {loading ? 'Mencari...' : 'Cari'} {/* [cite: 314] */}
                   </Button>
                 </Box>
 
@@ -572,75 +526,61 @@ const UserDashboard = () => {
             </Box>
           </Fade>
         );
-
       case 'history':
         return (
           <Fade in timeout={500}>
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
                 <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HistoryIcon color="primary" />
-                  Riwayat Distribusi
+                  <HistoryIcon color="primary" /> {/* [cite: 316] */}
+                  Riwayat Distribusi {/* [cite: 316] */}
                 </Typography>
                 <Button
                   variant="contained"
-                  onClick={handleOpen}
-                  disabled={loading}
-                  startIcon={<AddIcon />}
+                  onClick={handleOpen} // [cite: 316]
+                  disabled={loading} // [cite: 317]
+                  startIcon={<AddIcon />} // [cite: 317]
                   sx={{ borderRadius: 3 }}
                 >
-                  Permintaan Baru
+                  Permintaan Baru {/* [cite: 318] */}
                 </Button>
               </Box>
 
               <TableContainer component={Paper} sx={{ borderRadius: 3, overflow: 'hidden' }}>
                 <Table>
                   <TableHead sx={{
-                    background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                    background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', // [cite: 318, 319]
                   }}>
                     <TableRow>
-                      {['ID', 'Material', 'Lot Batch Number', 'Tujuan', 'Jumlah', 'Tanggal', 'Status', 'Aksi'].map((header) => (
-                        <TableCell key={header} sx={{ color: 'white', fontWeight: 600 }}>
+                      {['ID', 'Material', 'Lot Batch Number', 'Tujuan', 'Jumlah', 'Tanggal', 'Status'].map((header) => ( // Removed 'Aksi'
+                        <TableCell key={header} sx={{ color: 'white', fontWeight: 600 }}> {/* [cite: 319, 320] */}
                           {header}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {distribusi.map((dist, index) => (
+                    {distribusi.map((dist, index) => ( // [cite: 321]
                       <Fade in timeout={300 + index * 100} key={dist.ID_Distribusi}>
-                        <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.05)' } }}>
-                          <TableCell sx={{ fontWeight: 500 }}>{dist.ID_Distribusi}</TableCell>
-                          <TableCell>{dist.Nama_plat}</TableCell>
-                          <TableCell>{dist.Lot_Batch_Number}</TableCell> {/* Added Lot_Batch_Number */}
-                          <TableCell>{dist.Nama_Lokasi}</TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{dist.Jumlah?.toLocaleString()}</TableCell>
+                        <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.05)' } }}> {/* [cite: 322] */}
+                          <TableCell sx={{ fontWeight: 500 }}>{dist.ID_Distribusi}</TableCell> {/* [cite: 322] */}
+                          <TableCell>{dist.Nama_plat}</TableCell> {/* [cite: 322] */}
+                          <TableCell>{dist.Lot_Batch_Number}</TableCell> {/* [cite: 322] */}
+                          <TableCell>{dist.Nama_Lokasi}</TableCell> {/* [cite: 323] */}
+                          <TableCell sx={{ fontWeight: 500 }}>{dist.Jumlah?.toLocaleString()}</TableCell> {/* [cite: 323] */}
                           <TableCell>
-                            {new Date(dist.Tanggal_permintaan).toLocaleDateString('id-ID')}
+                            {new Date(dist.Tanggal_permintaan).toLocaleDateString('id-ID')} {/* [cite: 324] */}
                           </TableCell>
-                          <TableCell>{getStatusChip(dist.Status)}</TableCell>
-                          <TableCell>
-                            {dist.Status === 'pending' && (
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                onClick={() => handleDistribusiSelesai(dist.ID_Distribusi)}
-                                disabled={loading}
-                                startIcon={<CheckIcon />}
-                              >
-                                Selesai
-                              </Button>
-                            )}
-                          </TableCell>
+                          <TableCell>{getStatusChip(dist.Status)}</TableCell> {/* [cite: 324] */}
+                           {/* Action button (Selesai) removed for web, as it's replaced by mobile scan */}
                         </TableRow>
                       </Fade>
                     ))}
-                    {distribusi.length === 0 && (
+                    {distribusi.length === 0 && ( // [cite: 329]
                       <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}> {/* Updated colspan */}
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}> {/* Updated colspan */}
                           <Typography color="text.secondary">
-                            {loading ? 'Memuat data...' : 'Tidak ada data distribusi'}
+                            {loading ? 'Memuat data...' : 'Tidak ada data distribusi'} {/* [cite: 330, 331] */}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -651,134 +591,130 @@ const UserDashboard = () => {
             </Box>
           </Fade>
         );
-
       default: // dashboard
         return (
           <Fade in timeout={500}>
             <Box>
               <Typography variant="h5" gutterBottom sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <DashboardIcon color="primary" />
-                Dashboard Overview
+                <DashboardIcon color="primary" /> {/* [cite: 333] */}
+                Dashboard Overview {/* [cite: 334] */}
               </Typography>
 
-              {/* Statistik Cards */}
-              <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid container spacing={3} sx={{ mb: 4 }}> {/* [cite: 334] */}
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
-                    title="Total Distribusi"
-                    value={countByStatus.total}
-                    icon={<TrendingUpIcon />}
-                    color="#1976d2"
-                    trend="+12% dari bulan lalu"
+                    title="Total Distribusi" // [cite: 335]
+                    value={countByStatus.total} // [cite: 335]
+                    icon={<TrendingUpIcon />} // [cite: 335]
+                    color="#1976d2" // [cite: 335]
+                    trend="+12% dari bulan lalu" // [cite: 335]
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
-                    title="Pending"
-                    value={countByStatus.pending}
-                    icon={<ScheduleIcon />}
-                    color="#ff9800"
-                    trend="Memerlukan tindakan"
+                    title="Pending" // [cite: 337]
+                    value={countByStatus.pending} // [cite: 337]
+                    icon={<ScheduleIcon />} // [cite: 337]
+                    color="#ff9800" // [cite: 337]
+                    trend="Memerlukan tindakan" // [cite: 337]
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
-                    title="Terdistribusi"
-                    value={countByStatus.terdistribusi}
-                    icon={<ShippingIcon />}
-                    color="#2196f3"
-                    trend="Dalam pengiriman"
+                    title="Terdistribusi" // [cite: 338]
+                    value={countByStatus.terdistribusi} // [cite: 338]
+                    icon={<ShippingIcon />} // [cite: 338]
+                    color="#2196f3" // [cite: 339]
+                    trend="Dalam pengiriman" // [cite: 339]
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <StatCard
-                    title="Disetujui"
-                    value={countByStatus.disetujui}
-                    icon={<CheckIcon />}
-                    color="#4caf50"
-                    trend="Selesai"
+                    title="Disetujui" // [cite: 340]
+                    value={countByStatus.disetujui} // [cite: 340]
+                    icon={<CheckIcon />} // [cite: 340]
+                    color="#4caf50" // [cite: 340]
+                    trend="Selesai" // [cite: 341]
                   />
                 </Grid>
               </Grid>
 
-              {/* Quick Actions */}
-              <Card sx={{ p: 3, mb: 4, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  Aksi Cepat
+              <Card sx={{ p: 3, mb: 4, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}> {/* [cite: 341, 342] */}
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> {/* [cite: 342] */}
+                  Aksi Cepat {/* [cite: 342] */}
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item xs={12} sm={6} md={4}> {/* [cite: 343] */}
                     <Button
                       fullWidth
                       variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={handleOpen}
+                      startIcon={<AddIcon />} // [cite: 344]
+                      onClick={handleOpen} // [cite: 344]
                       sx={{ py: 2, borderRadius: 3 }}
                     >
-                      Permintaan Distribusi
+                      Permintaan Distribusi {/* [cite: 345] */}
                     </Button>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
                     <Button
                       fullWidth
-                      variant="outlined"
-                      startIcon={<MapIcon />}
-                      onClick={() => setActiveTab('tracking')}
+                      variant="outlined" // [cite: 346]
+                      startIcon={<MapIcon />} // [cite: 346]
+                      onClick={() => setActiveTab('tracking')} // [cite: 346]
                       sx={{ py: 2, borderRadius: 3 }}
                     >
-                      Lacak Material
+                      Lacak Material {/* [cite: 347] */}
                     </Button>
                   </Grid>
                   <Grid item xs={12} sm={6} md={4}>
                     <Button
                       fullWidth
-                      variant="outlined"
-                      startIcon={<HistoryIcon />}
-                      onClick={() => setActiveTab('history')}
+                      variant="outlined" // [cite: 348]
+                      startIcon={<HistoryIcon />} // [cite: 348]
+                      onClick={() => setActiveTab('history')} // [cite: 348]
                       sx={{ py: 2, borderRadius: 3 }}
                     >
-                      Lihat Riwayat
+                      Lihat Riwayat {/* [cite: 349] */}
                     </Button>
                   </Grid>
                 </Grid>
               </Card>
 
-              {/* Recent Activity */}
               <Card sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  Aktivitas Terbaru
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> {/* [cite: 351] */}
+                  Aktivitas Terbaru {/* [cite: 351] */}
                 </Typography>
-                {distribusi.slice(0, 5).map((dist, index) => (
+                {distribusi.slice(0, 5).map((dist, index) => ( // [cite: 351]
                   <Zoom in timeout={300 + index * 100} key={dist.ID_Distribusi}>
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        py: 2,
-                        px: 2,
-                        mb: 1,
-                        borderRadius: 2,
-                        backgroundColor: 'rgba(25, 118, 210, 0.05)',
-                        border: '1px solid rgba(25, 118, 210, 0.1)',
+                        py: 2, // [cite: 352]
+                        px: 2, // [cite: 353]
+                        mb: 1, // [cite: 353]
+                        borderRadius: 2, // [cite: 353]
+                        backgroundColor: 'rgba(25, 118, 210, 0.05)', // [cite: 354]
+                        border: '1px solid rgba(25, 118, 210, 0.1)', // [cite: 354]
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}> {/* [cite: 355] */}
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {dist.Nama_plat}
+                          {dist.Nama_plat} {/* [cite: 355] */}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Lot: {dist.Lot_Batch_Number} • {dist.Nama_Lokasi} • {new Date(dist.Tanggal_permintaan).toLocaleDateString('id-ID')}
+                          Lot: {dist.Lot_Batch_Number} • {dist.Nama_Lokasi} • {new Date(dist.Tanggal_permintaan).toLocaleDateString('id-ID')} {/* [cite: 356] */}
                         </Typography>
                       </Box>
-                      {getStatusChip(dist.Status)}
+                      {getStatusChip(dist.Status)} {/* [cite: 357] */}
                     </Box>
                   </Zoom>
                 ))}
-                {distribusi.length === 0 && (
+                {distribusi.length === 0 && ( // [cite: 358]
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Typography color="text.secondary">
-                      Belum ada aktivitas distribusi
+                      Belum ada aktivitas distribusi {/* [cite: 358] */}
                     </Typography>
                   </Box>
                 )}
@@ -796,23 +732,23 @@ const UserDashboard = () => {
 
         {/* Dialog Formulir */}
         <Dialog
-          open={open}
-          onClose={handleClose}
+          open={open} // [cite: 360]
+          onClose={handleClose} // [cite: 360]
           maxWidth="md"
           fullWidth
           PaperProps={{
-            sx: { borderRadius: 3 }
+            sx: { borderRadius: 3 } // [cite: 361]
           }}
         >
           <DialogTitle sx={{
-            background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
+            background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', // [cite: 361]
+            color: 'white', // [cite: 362]
+            display: 'flex', // [cite: 362]
+            alignItems: 'center', // [cite: 362]
             gap: 1
           }}>
-            <AddIcon />
-            Permintaan Distribusi Baru
+            <AddIcon /> {/* [cite: 362] */}
+            Permintaan Distribusi Baru {/* [cite: 362] */}
           </DialogTitle>
           <DialogContent sx={{ mt: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
@@ -822,22 +758,22 @@ const UserDashboard = () => {
                 value={form.ID_Plat}
                 onChange={handleChange}
                 displayEmpty
-                disabled={loading}
+                disabled={loading} // [cite: 364]
                 sx={{ borderRadius: 2 }}
               >
                 <MenuItem value="" disabled>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-                    Pilih Material
+                    Pilih Material {/* [cite: 365] */}
                   </Box>
                 </MenuItem>
-                {platOptions.map((plat) => (
+                {platOptions.map((plat) => ( // [cite: 365]
                   <MenuItem key={plat.ID_Plat} value={plat.ID_Plat}>
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {plat.Nama_plat}
+                        {plat.Nama_plat} {/* [cite: 366] */}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Lot: {plat.Lot_Batch_Number}
+                        Lot: {plat.Lot_Batch_Number} {/* [cite: 367] */}
                       </Typography>
                     </Box>
                   </MenuItem>
@@ -849,73 +785,72 @@ const UserDashboard = () => {
                 name="ID_Lokasi_tujuan"
                 value={form.ID_Lokasi_tujuan}
                 onChange={handleChange}
-                displayEmpty
-                disabled={loading}
+                displayEmpty // [cite: 369]
+                disabled={loading} // [cite: 369]
                 sx={{ borderRadius: 2 }}
               >
                 <MenuItem value="" disabled>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-                    Pilih Lokasi Tujuan
+                    Pilih Lokasi Tujuan {/* [cite: 370] */}
                   </Box>
                 </MenuItem>
-                {lokasiOptions.map((lokasi) => (
+                {lokasiOptions.map((lokasi) => ( // [cite: 370]
                   <MenuItem key={lokasi.ID_Lokasi} value={lokasi.ID_Lokasi}>
-                    {lokasi.Nama_Lokasi}
+                    {lokasi.Nama_Lokasi} {/* [cite: 371] */}
                   </MenuItem>
                 ))}
               </Select>
 
               <TextField
                 fullWidth
-                name="Jumlah"
-                label="Jumlah"
+                name="Jumlah" // [cite: 372]
+                label="Jumlah" // [cite: 372]
                 type="number"
                 value={form.Jumlah}
                 onChange={handleChange}
-                inputProps={{ min: 1 }}
-                disabled={loading}
+                inputProps={{ min: 1 }} // [cite: 372]
+                disabled={loading} // [cite: 373]
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 3 }}>
             <Button
-              onClick={handleClose}
-              disabled={loading}
+              onClick={handleClose} // [cite: 374]
+              disabled={loading} // [cite: 374]
               sx={{ borderRadius: 2 }}
             >
-              Batal
+              Batal {/* [cite: 374] */}
             </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={handleSubmit} // [cite: 375]
               variant="contained"
-              disabled={loading || !form.ID_Plat || !form.ID_Lokasi_tujuan || !form.Jumlah}
+              disabled={loading || !form.ID_Plat || !form.ID_Lokasi_tujuan || !form.Jumlah} // [cite: 376]
               sx={{ borderRadius: 2, minWidth: 120 }}
             >
-              {loading ? 'Menyimpan...' : 'Simpan'}
+              {loading ? 'Menyimpan...' : 'Simpan'} {/* [cite: 377] */}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Loading Overlay */}
-        {loading && (
+        {loading && ( // [cite: 377]
           <Box
             sx={{
               position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              top: 0, // [cite: 378]
+              left: 0, // [cite: 378]
+              right: 0, // [cite: 378]
+              bottom: 0, // [cite: 378]
+              display: 'flex', // [cite: 378]
+              alignItems: 'center', // [cite: 378]
+              justifyContent: 'center', // [cite: 379]
+              backgroundColor: 'rgba(0, 0, 0, 0.1)', // [cite: 379]
               zIndex: 9999,
             }}
           >
             <Paper sx={{ p: 3, borderRadius: 3, textAlign: 'center' }}>
-              <LinearProgress sx={{ mb: 2, width: 200 }} />
-              <Typography>Memproses...</Typography>
+              <LinearProgress sx={{ mb: 2, width: 200 }} /> {/* [cite: 379, 380] */}
+              <Typography>Memproses...</Typography> {/* [cite: 380] */}
             </Paper>
           </Box>
         )}
