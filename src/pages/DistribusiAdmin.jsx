@@ -1,4 +1,5 @@
-// src/pages/DistribusiAdmin.jsx (atau path yang sesuai)
+// src/pages/DistribusiAdmin.jsx
+
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { getToken } from '../utils/auth'; // Pastikan path ini benar
@@ -8,7 +9,8 @@ import {
     TableHead, TableRow, Paper, Dialog, DialogActions, DialogContent, DialogTitle,
     Chip, CircularProgress, FormControl, Select, MenuItem, TextField,
     IconButton, Tooltip, Alert, Grid, Card, CardContent, Divider,
-    Container, useTheme, Snackbar, TablePagination, InputAdornment, Checkbox
+    Container, useTheme, Snackbar, TablePagination, InputAdornment, Checkbox,
+    Autocomplete // --- PERUBAHAN: Impor Autocomplete ---
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -24,7 +26,6 @@ import { QRCodeCanvas } from 'qrcode.react';
 const BASE_URL = 'http://localhost:3000';
 const POLLING_INTERVAL = 60000;
 
-// ... (api, api.interceptors, STATUS_CONFIG tetap sama) ...
 const api = axios.create({
     baseURL: BASE_URL,
     timeout: 30000,
@@ -40,7 +41,6 @@ api.interceptors.request.use(config => {
 
 const STATUS_CONFIG = {
     pending: { color: 'warning', label: 'Pending' },
-    // diproses: { color: 'info', label: 'Diproses User' },
     terdistribusi: { color: 'primary', label: 'Terdistribusi User' },
     disetujui: { color: 'success', label: 'Disetujui Admin' },
     ditolak: { color: 'error', label: 'Ditolak Admin' }
@@ -88,10 +88,8 @@ function DistribusiAdminContent() {
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: () => { }, itemId: null, newStatus: '' });
 
-    // --- FITUR BARU: State untuk checkbox print ---
     const [selectedToPrint, setSelectedToPrint] = useState(new Set());
 
-    // --- PERBAIKAN: Fungsi Print QR menggunakan HTML biasa ---
     const handlePrintQR = useCallback(() => {
         const qrCanvas = document.querySelector('.qr-code-canvas-dialog canvas');
         if (!qrCanvas) {
@@ -140,7 +138,6 @@ function DistribusiAdminContent() {
         }
     }, [generatedQrCode, generatedDistribusiId]);
 
-    // --- FITUR BARU: Fungsi Print Distribusi Terpilih menggunakan HTML Biasa ---
     const handlePrintSelected = () => {
         if (selectedToPrint.size === 0) return;
 
@@ -225,7 +222,6 @@ function DistribusiAdminContent() {
     const stats = useMemo(() => ({
         total: distribusi.length,
         pending: distribusi.filter(d => d.Status === 'pending').length,
-        // diproses: distribusi.filter(d => d.Status === 'diproses').length,
         terdistribusi: distribusi.filter(d => d.Status === 'terdistribusi').length,
         disetujui: distribusi.filter(d => d.Status === 'disetujui').length,
         ditolak: distribusi.filter(d => d.Status === 'ditolak').length
@@ -354,7 +350,6 @@ function DistribusiAdminContent() {
 
     useEffect(() => { setPage(0); }, [searchTerm, statusFilter, jenisFilter]);
 
-    // --- FITUR BARU: Efek untuk membersihkan selection jika data berubah ---
     useEffect(() => {
         const currentIds = new Set(processedDistribusi.map(d => d.ID_Distribusi));
         setSelectedToPrint(prevSelected => {
@@ -491,7 +486,6 @@ function DistribusiAdminContent() {
     const handleSearchChange = (event) => setSearchTerm(event.target.value);
     const handleClearSearch = () => setSearchTerm('');
     
-    // --- FITUR BARU: Handler untuk checkbox ---
     const handleSelectToPrint = (event, id) => {
         const newSelected = new Set(selectedToPrint);
         if (event.target.checked) {
@@ -544,7 +538,6 @@ function DistribusiAdminContent() {
         const showSkeleton = loading.table && paginatedDistribusi.length === 0 && !showInitialLoading && !error;
         const showNoDataMessage = !loading.table && !loading.confirmation && paginatedDistribusi.length === 0 && !error;
 
-        // --- FITUR BARU: Variabel untuk checkbox "select all" ---
         const numSelected = selectedToPrint.size;
         const rowCount = paginatedDistribusi.length;
         const isSelectedAll = rowCount > 0 && numSelected === rowCount;
@@ -560,7 +553,6 @@ function DistribusiAdminContent() {
                     <Table sx={{ minWidth: 1200 }} stickyHeader>
                         <TableHead>
                             <TableRow>
-                                {/* --- FITUR BARU: Kolom Checkbox --- */}
                                 <TableCell padding="checkbox" sx={{width: '1%', fontWeight: 'bold'}}>
                                     <Tooltip title={isSelectedAll ? "Batal Pilih Semua" : "Pilih Semua di Halaman Ini"}>
                                         <Checkbox
@@ -590,7 +582,6 @@ function DistribusiAdminContent() {
                             {showSkeleton ? (Array(rowsPerPage > 0 ? rowsPerPage : 5).fill(null).map((_, skeletonIndex) => (<TableRow key={`skeleton-${skeletonIndex}`}> <TableCell colSpan={13}> <Box sx={{ height: 40, bgcolor: theme.palette.mode === 'dark' ? 'grey.700' : 'grey.200', borderRadius: 1, animation: 'pulse 1.5s infinite ease-in-out', my: 0.5 }} /> </TableCell> </TableRow>))) : paginatedDistribusi.length > 0 ? (paginatedDistribusi.map((row, index) => {
                                 const isItemSelected = selectedToPrint.has(row.ID_Distribusi);
                                 return (<TableRow key={row.ID_Distribusi} hover role="checkbox" tabIndex={-1} selected={isItemSelected} sx={{ '& td, & th': { whiteSpace: 'nowrap', fontSize: '0.85rem' } }} >
-                                    {/* --- FITUR BARU: Checkbox per baris --- */}
                                     <TableCell padding="checkbox">
                                         <Checkbox
                                             color="primary"
@@ -630,7 +621,7 @@ function DistribusiAdminContent() {
 
     const renderFormField = (label, name, options, loadingState, placeholder) => {
         return (<><Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>{label}</Typography><FormControl fullWidth sx={{ mb: 2 }}>{loadingState ? (<Box display="flex" alignItems="center" my={1} sx={{ color: 'text.secondary' }}> <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" /> <Typography variant="body2">Memuat {label.replace('*', '').trim().toLowerCase()}...</Typography> </Box>) : (<Select name={name} value={form[name]} onChange={handleChange} displayEmpty disabled={loading.submit || loading.platCheckLoading} size="small" sx={{ borderRadius: '8px' }} MenuProps={{ PaperProps: { sx: { maxHeight: 250 } } }} required={label.includes('*')} ><MenuItem value="" disabled><em>{placeholder}</em></MenuItem>{options.length === 0 && !loadingState && (<MenuItem value="" disabled><em>Tidak ada data {label.replace('*', '').trim().toLowerCase()}</em></MenuItem>)}{options.map(option => (<MenuItem key={option.ID_User || option.ID_Plat || option.ID_Lokasi || option.id} value={option.ID_User || option.ID_Plat || option.ID_Lokasi || option.id} >{option.Username || option.Nama_plat || option.Nama_Lokasi || option.name}
-            {name === "ID_Plat" && (option.Status || option.stok !== undefined) ? ` (${option.Status ? `Status: ${option.Status}` : ''}${option.Status && option.stok !== undefined ? ', ' : ''}${option.stok !== undefined ? `Stok: ${option.stok}` : ''})` : ''}</MenuItem>))}</Select>)}</FormControl></>);
+        {name === "ID_Plat" && (option.Status || option.stok !== undefined) ? ` (${option.Status ? `Status: ${option.Status}` : ''}${option.Status && option.stok !== undefined ? ', ' : ''}${option.stok !== undefined ? `Stok: ${option.stok}` : ''})` : ''}</MenuItem>))}</Select>)}</FormControl></>);
     };
 
     const renderStatCard = (title, value, color, bgColor) => { return (<Grid item xs={12} sm={6} md={4} lg={2.4} xl={2}> <Card elevation={2} sx={{ backgroundColor: bgColor, borderRadius: '12px', transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out', '&:hover': { transform: 'translateY(-4px)', boxShadow: theme.shadows[6] }, height: '100%', display: 'flex', flexDirection: 'column' }} > <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2 } }}> <Typography variant="body2" color="text.secondary" gutterBottom>{title}</Typography> <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', color: color, mt: 0.5, mb: 0 }}>{value}</Typography> </CardContent> </Card> </Grid>); };
@@ -650,7 +641,6 @@ function DistribusiAdminContent() {
                 <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                     {renderStatCard('Total', stats.total, theme.palette.text.primary, theme.palette.background.paper)}
                     {renderStatCard('Pending', stats.pending, theme.palette.warning.main, theme.palette.background.paper)}
-                    {/* {renderStatCard('Diproses User', stats.diproses, theme.palette.info.main, theme.palette.background.paper)} */}
                     {renderStatCard('Terdistribusi User', stats.terdistribusi, theme.palette.primary.main, theme.palette.background.paper)}
                     {renderStatCard('Disetujui Admin', stats.disetujui, theme.palette.success.main, theme.palette.background.paper)}
                     {renderStatCard('Ditolak Admin', stats.ditolak, theme.palette.error.main, theme.palette.background.paper)}
@@ -666,7 +656,6 @@ function DistribusiAdminContent() {
                         </Box>
                     </Grid>
                     <Grid item xs={12} lg={5}> <TextField fullWidth variant="outlined" size="small" placeholder="Cari (ID, jenis, plat, lokasi, user, QR)..." value={searchTerm} onChange={handleSearchChange} InputProps={{ startAdornment: (<InputAdornment position="start"> <SearchIcon color="action" /> </InputAdornment>), endAdornment: searchTerm && (<InputAdornment position="end"> <Tooltip title="Hapus pencarian" arrow> <IconButton size="small" onClick={handleClearSearch} > <ClearIcon fontSize="small" /> </IconButton> </Tooltip> </InputAdornment>), sx: { borderRadius: '8px' } }} /> </Grid>
-                    {/* --- FITUR BARU: Tombol Print Distribusi --- */}
                     <Grid item xs={12}>
                         <Box display="flex" gap={1} flexWrap="wrap" justifyContent={{ xs: 'center', sm: 'flex-end' }}>
                             <Button
@@ -710,7 +699,60 @@ function DistribusiAdminContent() {
                             {formError}
                         </Alert>
                     )}
-                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Jenis Distribusi *</Typography> <FormControl fullWidth sx={{ mb: 2 }}> <Select name="Jenis_distribusi" value={form.Jenis_distribusi} onChange={handleChange} displayEmpty disabled={loading.submit || loading.platCheckLoading} size="small" sx={{ borderRadius: '8px' }} required > <MenuItem value="" disabled><em>Pilih Jenis Distribusi</em></MenuItem> <MenuItem value="masuk">Masuk (Barang ke Gudang)</MenuItem> <MenuItem value="keluar">Keluar (Barang dari Gudang)</MenuItem> </Select> </FormControl> {renderFormField('Plat *', 'ID_Plat', platOptions, loading.platOptions, 'Pilih Plat')} {renderFormField(form.Jenis_distribusi === 'masuk' ? 'User PIC Gudang *' : 'User Penerima *', 'UserID', userOptions, loading.userOptions, form.Jenis_distribusi === 'masuk' ? 'Pilih User PIC Gudang' : 'Pilih User Penerima')} {form.Jenis_distribusi === 'keluar' && (renderFormField('Lokasi Tujuan *', 'ID_Lokasi_tujuan', lokasiOptions, loading.lokasiOptions, 'Pilih Lokasi Tujuan'))} <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Jumlah *</Typography> <TextField name="Jumlah" type="number" value={form.Jumlah} onChange={handleChange} fullWidth placeholder="0" inputProps={{ min: 1 }} disabled={loading.submit || loading.platCheckLoading} size="small" required InputProps={{ sx: { borderRadius: '8px' } }} /> </DialogContent>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Jenis Distribusi *</Typography> 
+                    <FormControl fullWidth sx={{ mb: 2 }}> 
+                        <Select name="Jenis_distribusi" value={form.Jenis_distribusi} onChange={handleChange} displayEmpty disabled={loading.submit || loading.platCheckLoading} size="small" sx={{ borderRadius: '8px' }} required > 
+                            <MenuItem value="" disabled><em>Pilih Jenis Distribusi</em></MenuItem> 
+                            <MenuItem value="masuk">Masuk (Barang ke Gudang)</MenuItem> 
+                            <MenuItem value="keluar">Keluar (Barang dari Gudang)</MenuItem> 
+                        </Select> 
+                    </FormControl>
+
+                    {/* --- PERUBAHAN: Mengganti dropdown plat dengan Autocomplete --- */}
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Plat *</Typography>
+                    <Autocomplete
+                        id="plat-autocomplete"
+                        options={platOptions}
+                        getOptionLabel={(option) => 
+                           `${option.Nama_plat || ''}${option.Status ? ` (${option.Status})` : ''}${option.stok !== undefined ? ` - Stok: ${option.stok}` : ''}`
+                        }
+                        isOptionEqualToValue={(option, value) => option.ID_Plat === value.ID_Plat}
+                        value={platOptions.find(option => option.ID_Plat === form.ID_Plat) || null}
+                        onChange={(event, newValue) => {
+                            setFormError('');
+                            setForm(f => ({ ...f, ID_Plat: newValue ? newValue.ID_Plat : '' }));
+                        }}
+                        loading={loading.platOptions}
+                        loadingText="Memuat plat..."
+                        noOptionsText="Plat tidak ditemukan"
+                        disabled={loading.submit || loading.platCheckLoading || !form.Jenis_distribusi}
+                        sx={{ mb: 2 }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder="Cari atau Pilih Plat"
+                                size="small"
+                                required
+                                InputProps={{
+                                    ...params.InputProps,
+                                    sx: { borderRadius: '8px' },
+                                    endAdornment: (
+                                        <>
+                                            {loading.platOptions ? <CircularProgress color="inherit" size={20} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                            />
+                        )}
+                    />
+                    {/* --- Akhir Perubahan --- */}
+
+                    {renderFormField(form.Jenis_distribusi === 'masuk' ? 'User PIC Gudang *' : 'User Penerima *', 'UserID', userOptions, loading.userOptions, form.Jenis_distribusi === 'masuk' ? 'Pilih User PIC Gudang' : 'Pilih User Penerima')} 
+                    {form.Jenis_distribusi === 'keluar' && (renderFormField('Lokasi Tujuan *', 'ID_Lokasi_tujuan', lokasiOptions, loading.lokasiOptions, 'Pilih Lokasi Tujuan'))} 
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Jumlah *</Typography> 
+                    <TextField name="Jumlah" type="number" value={form.Jumlah} onChange={handleChange} fullWidth placeholder="0" inputProps={{ min: 1 }} disabled={loading.submit || loading.platCheckLoading} size="small" required InputProps={{ sx: { borderRadius: '8px' } }} /> 
+                </DialogContent>
                 <Divider />
                 <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5, bgcolor: theme.palette.background.default }}> <Button onClick={handleClose} disabled={loading.submit || loading.platCheckLoading} variant="text" sx={{ borderRadius: '8px' }} > Batal </Button> <Button onClick={handleSubmit} variant="contained" disabled={loading.submit || loading.platOptions || loading.lokasiOptions || loading.userOptions || loading.platCheckLoading || !form.Jenis_distribusi || !form.ID_Plat || !form.UserID || !form.Jumlah || (form.Jenis_distribusi === 'keluar' && !form.ID_Lokasi_tujuan)} sx={{ borderRadius: '8px' }} > {loading.submit || loading.platCheckLoading ? (<> <CircularProgress size={18} sx={{ mr: 1 }} color="inherit" /> {loading.submit ? 'Menyimpan...' : (loading.platCheckLoading ? 'Memeriksa Plat...' : 'Memproses...')} </>) : (connectionStatus.slow ? 'Simpan (Lambat)' : 'Simpan Distribusi')} </Button> </DialogActions>
             </Dialog>
@@ -762,7 +804,6 @@ function DistribusiAdminContent() {
                 <Divider />
                 <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5, bgcolor: theme.palette.background.default, justifyContent: 'space-between' }}>
                     <Button onClick={handleCloseQrDialog} variant="outlined" color="primary" sx={{ borderRadius: '8px' }} > Tutup </Button>
-                    {/* --- PERBAIKAN: Tombol Print QR memanggil fungsi baru --- */}
                     <Button
                         onClick={handlePrintQR}
                         variant="contained"

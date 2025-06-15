@@ -223,13 +223,13 @@ const Login = () => {
               
               {/* Remember Me and Forgot Password links */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <FormControlLabel
+                {/* <FormControlLabel
                   control={<Checkbox value="remember" color="primary" />}
                   label="Ingat saya"
-                />
-                <Link href="#" variant="body2" color="primary.main" fontWeight="500">
+                /> */}
+                {/* <Link href="#" variant="body2" color="primary.main" fontWeight="500">
                   Lupa password?
-                </Link>
+                </Link> */}
               </Box>
               
               {/* Login Button */}

@@ -391,12 +391,19 @@ const UserDashboard = () => {
     const result = await apiCall(`${BASE_URL}/api/plat/lot/${encodedLot}`);
 
     if (result.success && result.data.success) {
-      const processedData = {
-        ...result.data.data,
-        latitude: Number(result.data.data.latitude),
-        longitude: Number(result.data.data.longitude),
-        Kuantitas: parseInt(result.data.data.Kuantitas)
-      };
+      // ...
+   const processedData = {
+     ...result.data.data,
+     
+     latitude: Number(result.data.data.latitude) || 0,
+     longitude: Number(result.data.data.longitude) || 0,
+     // --- PERBAIKAN DI SINI ---
+     
+     // Gunakan "Stok" dan pastikan datanya adalah angka yang valid.
+     Stok: Number(result.data.data.Stok) || 0 
+   };
+   setLotData(processedData);
+// ...
       setLotData(processedData);
     } else {
       const message = result.data?.message || result.error || 'Material tidak ditemukan';
