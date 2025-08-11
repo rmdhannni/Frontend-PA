@@ -1,16 +1,22 @@
 // src/pages/DistribusiAdmin.jsx
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { getToken } from '../utils/auth'; // Pastikan path ini benar
-import Layout from '../components/partials/Layout'; // Pastikan path ini benar
+import { getToken } from '../utils/auth'; 
+import Layout from '../components/partials/Layout'; 
 import {
     Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Dialog, DialogActions, DialogContent, DialogTitle,
     Chip, CircularProgress, FormControl, Select, MenuItem, TextField,
     IconButton, Tooltip, Alert, Grid, Card, CardContent, Divider,
     Container, useTheme, Snackbar, TablePagination, InputAdornment, Checkbox,
-    Autocomplete // --- PERUBAHAN: Impor Autocomplete ---
+    Autocomplete,
+    // --- BARU: Import untuk panduan ---
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Stack
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -21,7 +27,13 @@ import PrintIcon from '@mui/icons-material/Print';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import CategoryIcon from '@mui/icons-material/Category';
+// --- BARU: Ikon untuk tombol panduan ---
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { QRCodeCanvas } from 'qrcode.react';
+
+import logoBumn from '../assets/logo-bumn.png';
+import logoDefendId from '../assets/logo-defendid.png';
+import logoPtPal from '../assets/logo-pt-pal-biru.png';
 
 const BASE_URL = 'http://localhost:3000';
 const POLLING_INTERVAL = 60000;
@@ -90,6 +102,12 @@ function DistribusiAdminContent() {
 
     const [selectedToPrint, setSelectedToPrint] = useState(new Set());
 
+    // --- BARU: State dan handler untuk dialog panduan ---
+    const [openGuide, setOpenGuide] = useState(false);
+    const handleOpenGuide = () => setOpenGuide(true);
+    const handleCloseGuide = () => setOpenGuide(false);
+
+    // ... (Semua fungsi dan hook lainnya tetap sama persis)
     const handlePrintQR = useCallback(() => {
         const qrCanvas = document.querySelector('.qr-code-canvas-dialog canvas');
         if (!qrCanvas) {
@@ -140,82 +158,127 @@ function DistribusiAdminContent() {
 
     const handlePrintSelected = () => {
         if (selectedToPrint.size === 0) return;
-
         const selectedItems = distribusi.filter(d => selectedToPrint.has(d.ID_Distribusi));
+
+        const tableRows = selectedItems.map((item, index) => `
+            <tr>
+                <td style="text-align: center; padding: 5px;">${index + 1}</td>
+                <td style="padding: 5px;">${item.ID_Distribusi}</td>
+                <td style="padding: 5px; text-transform: capitalize;">${item.Jenis_distribusi || '-'}</td>
+                <td style="padding: 5px;">${item.Nama_plat || '-'}</td>
+                <td style="padding: 5px;">${item.Jenis_distribusi === 'keluar' ? (item.Nama_Lokasi || '-') : (item.Nama_Lokasi_Plat_Default || '-')}</td>
+                <td style="text-align: right; padding: 5px;">${item.Jumlah}</td>
+                <td style="padding: 5px;">${item.Username_Distribusi || '-'}</td>
+            </tr>
+        `).join('');
+
+        const printContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>SURAT JALAN - PT PAL INDONESIA</title>
+            <style>
+                @page { size: A4; margin: 0; }
+                html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif; font-size: 11pt; }
+                .page-wrapper { display: flex; flex-direction: column; height: 100%; padding: 0.7in 0.5in 0.5in 0.5in; box-sizing: border-box; }
+                .header { text-align: center; }
+                .header h1 { margin: 20px 0; font-weight: bold; font-size: 14pt; letter-spacing: 4px; }
+                .logo-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+                .logo-left { display: flex; align-items: center; gap: 15px; }
+                .logo-container img { max-height: 180px; width: 180px; }
+                .main-content { flex-grow: 1; padding-top: 20px; font-size: 12pt; line-height: 1.5; }
+                .footer { text-align: center; font-size: 9pt; color: black; padding-top: 10px; border-top: 2px solid black; }
+                .footer p { margin: 2px 0; }
+                .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10pt; }
+                .data-table th, .data-table td { border: 1px solid black; padding: 8px; text-align: left; vertical-align: top; }
+                .data-table th { background-color: #e0e0e0; font-weight: bold; text-align: center; }
+                .signature-container { display: table; width: 100%; margin-top: 50px; text-align: center; page-break-inside: avoid; font-size: 11pt; }
+                .signature-box { display: table-cell; width: 33%; }
+                @media print { body { background-color: white; } }
+            </style>
+        </head>
+        <body>
+            <div class="page-wrapper">
+                <header class="header">
+                    <div class="logo-container">
+                        <div class="logo-left">
+                            <img src="${logoBumn}" alt="Logo BUMN">
+                            <img src="${logoDefendId}" alt="Logo Defend ID">
+                        </div>
+                        <img src="${logoPtPal}" alt="Logo PT PAL Indonesia">
+                    </div>
+                    <h1>S U R A T &nbsp; J A L A N</h1> 
+                </header>
+
+                <main class="main-content">
+                    <p><strong>Perihal:</strong> Pengiriman Material</p>
+                    <p><strong>Tanggal Cetak:</strong> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p>Dengan hormat,</p>
+                    <p>Bersama ini kami kirimkan barang-barang seperti yang tercantum di bawah ini:</p>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID Distribusi</th>
+                                <th>Jenis</th>
+                                <th>Nama Material</th>
+                                <th>Lokasi Tujuan / Asal</th>
+                                <th>Jumlah</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    
+                    <div class="signature-container">
+                        <div class="signature-box">
+                            <p>Kabiro Dukungan Dan Pergudangan,</p><br/><br/><br/><br/>
+                            <p><strong>(___________________)</strong></p>
+                        </div>
+                        <div class="signature-box">
+                            <p>Diperiksa Oleh,</p><br/><br/><br/><br/>
+                            <p><strong>(___________________)</strong></p>
+                            <p><em>Penanggung Jawab: ${selectedItems[0]?.Username_Distribusi || ''}</em></p>
+                        </div>
+                        <div class="signature-box">
+                            <p>Kepala Departemen Dukungan Dan Pergudangan,</p><br/><br/><br/>
+                            <p><strong>(___________________)</strong></p>
+                        </div>
+                    </div>
+                </main>
+
+                <footer class="footer">
+                    <p>Kantor Pusat : PT PAL INDONESIA, UJUNG SURABAYA PO. BOX. 1134 INDONESIA. Web Site : http://www.pal.co.id</p>
+                    <p>Telp. +62-31-3292275 (Hunting) Fax : +62-31-3292530, 3292493, 3292516, E-Mail : headoffice@pal.co.id</p> 
+                    <p>Kantor Perwakilan : Jl. TANAH ABANG II / 27 JAKARTA 10160, PHONE +62-21-3846833 , Fax : +62-21-3843717, E-Mail : jakartabranch@pal.co.id</p> 
+                </footer>
+            </div>
+        </body>
+        </html>
+    `;
 
         const printWindow = window.open('', '_blank');
         if (printWindow) {
-            let tableContent = '';
-            selectedItems.forEach((item, index) => {
-                tableContent += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.ID_Distribusi}</td>
-                        <td style="text-transform: capitalize;">${item.Jenis_distribusi || '-'}</td>
-                        <td>${item.Nama_plat || '-'}</td>
-                        <td>${item.Jenis_distribusi === 'keluar' ? (item.Nama_Lokasi || '-') : (item.Nama_Lokasi_Plat_Default || '-')}</td>
-                        <td>${item.Jumlah}</td>
-                        <td>${item.Username_Distribusi || '-'}</td>
-                        <td>${STATUS_CONFIG[item.Status]?.label || item.Status}</td>
-                        <td>${item.Tanggal_permintaan ? new Date(item.Tanggal_permintaan).toLocaleDateString('id-ID') : '-'}</td>
-                    </tr>
-                `;
-            });
-
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Data Distribusi Terpilih</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 20px; }
-                            h1 { text-align: center; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
-                            th { background-color: #f2f2f2; }
-                            @media print {
-                                body { margin: 10mm; }
-                                .no-print { display: none; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Laporan Distribusi</h1>
-                        <p>Tanggal Cetak: ${new Date().toLocaleString('id-ID')}</p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>ID</th>
-                                    <th>Jenis</th>
-                                    <th>Plat</th>
-                                    <th>Lokasi Tujuan/Asal</th>
-                                    <th>Jumlah</th>
-                                    <th>User</th>
-                                    <th>Status</th>
-                                    <th>Tgl. Permintaan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableContent}
-                            </tbody>
-                        </table>
-                         <script>
-                            window.onload = function() {
-                                window.print();
-                                window.onafterprint = function() { window.close(); };
-                            };
-                        </script>
-                    </body>
-                </html>
-            `);
+            printWindow.document.open();
+            printWindow.document.write(printContent);
             printWindow.document.close();
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            };
         } else {
-             setSnackbarMessage("Gagal membuka jendela print. Mohon izinkan pop-up untuk situs ini.");
-             setSnackbarSeverity("warning");
-             setSnackbarOpen(true);
+            setSnackbarMessage("Gagal membuka jendela print. Mohon izinkan pop-up untuk situs ini.");
+            setSnackbarSeverity("warning");
+            setSnackbarOpen(true);
         }
     };
-
 
     const handleSnackbarClose = (event, reason) => { if (reason === 'clickaway') return; setSnackbarOpen(false); };
 
@@ -655,9 +718,20 @@ function DistribusiAdminContent() {
                             <Box display="flex" alignItems="center" gap={0.5}> <CategoryIcon color="primary" /> <Typography variant="body1" sx={{ fontWeight: 500, whiteSpace: 'nowrap', fontSize: '0.9rem' }}>Jenis:</Typography> <FormControl size="small" variant="outlined" sx={{ minWidth: { xs: 120, sm: 150 }, borderRadius: '8px' }}> <Select value={jenisFilter} onChange={(e) => setJenisFilter(e.target.value)} MenuProps={{ PaperProps: { sx: { maxHeight: 250 } } }} > <MenuItem value="all">Semua Jenis</MenuItem> <MenuItem value="masuk">Masuk</MenuItem> <MenuItem value="keluar">Keluar</MenuItem> </Select> </FormControl> </Box>
                         </Box>
                     </Grid>
-                    <Grid item xs={12} lg={5}> <TextField fullWidth variant="outlined" size="small" placeholder="Cari (ID, jenis, plat, lokasi, user, QR)..." value={searchTerm} onChange={handleSearchChange} InputProps={{ startAdornment: (<InputAdornment position="start"> <SearchIcon color="action" /> </InputAdornment>), endAdornment: searchTerm && (<InputAdornment position="end"> <Tooltip title="Hapus pencarian" arrow> <IconButton size="small" onClick={handleClearSearch} > <ClearIcon fontSize="small" /> </IconButton> </Tooltip> </InputAdornment>), sx: { borderRadius: '8px' } }} /> </Grid>
+                    <Grid item xs={12} lg={5}> <TextField fullWidth variant="outlined" size="small" placeholder="Cari (ID, jenis, plat, lokasi, user, QR)..." value={searchTerm} onChange={handleSearchChange} InputProps={{ startAdornment: (<InputAdornment position="start"> <SearchIcon color="action" /> </InputAdornment>), endAdornment: searchTerm && (<InputAdornment position="end"> <Tooltip title="Hapus pencarian" arrow> <IconButton size="small" onClick={handleClearSearch} > <ClearIcon fontSize="small" /> </IconButton> </Tooltip></InputAdornment>), sx: { borderRadius: '8px' } }} /> </Grid>
+                    {/* DIUBAH: Menambahkan tombol Panduan */}
                     <Grid item xs={12}>
-                        <Box display="flex" gap={1} flexWrap="wrap" justifyContent={{ xs: 'center', sm: 'flex-end' }}>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} justifyContent={{ xs: 'center', sm: 'flex-end' }}>
+                             <Button
+                                variant="outlined"
+                                color="info"
+                                onClick={handleOpenGuide}
+                                startIcon={<HelpOutlineIcon />}
+                                size="medium"
+                                sx={{ borderRadius: '8px' }}
+                            >
+                                Panduan
+                            </Button>
                             <Button
                                 variant="outlined"
                                 onClick={handlePrintSelected}
@@ -667,7 +741,7 @@ function DistribusiAdminContent() {
                                 size="medium"
                                 sx={{ borderRadius: '8px' }}
                             >
-                                Print Distribusi Terpilih ({selectedToPrint.size})
+                                Print Surat Jalan ({selectedToPrint.size})
                             </Button>
                             <Button
                                 variant="contained"
@@ -680,25 +754,18 @@ function DistribusiAdminContent() {
                             >
                                 Tambah Distribusi
                             </Button>
-                        </Box>
+                        </Stack>
                     </Grid>
                 </Grid>
             </Paper>
 
             {renderTableContent()}
 
+            {/* --- DIALOG UNTUK FORM TAMBAH DISTRIBUSI --- */}
             <Dialog open={open} onClose={loading.submit || loading.platCheckLoading ? undefined : handleClose} fullWidth maxWidth="sm" disableEscapeKeyDown={loading.submit || loading.platCheckLoading} PaperProps={{ sx: { borderRadius: '12px', m: { xs: 1, sm: 2 } } }} >
                 <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.palette.primary.contrastText, py: 1.5, px: 2 }}> <Typography variant="h6">Tambah Distribusi Baru</Typography> </DialogTitle>
                 <DialogContent sx={{ p: { xs: 2, sm: 3 }, mt: 1 }}>
-                    {formError && (
-                        <Alert
-                            severity="error"
-                            onClose={() => setFormError('')}
-                            sx={{ mb: 2, borderRadius: '8px', whiteSpace: 'pre-wrap' }}
-                        >
-                            {formError}
-                        </Alert>
-                    )}
+                    {formError && ( <Alert severity="error" onClose={() => setFormError('')} sx={{ mb: 2, borderRadius: '8px', whiteSpace: 'pre-wrap' }} > {formError} </Alert> )}
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Jenis Distribusi *</Typography> 
                     <FormControl fullWidth sx={{ mb: 2 }}> 
                         <Select name="Jenis_distribusi" value={form.Jenis_distribusi} onChange={handleChange} displayEmpty disabled={loading.submit || loading.platCheckLoading} size="small" sx={{ borderRadius: '8px' }} required > 
@@ -707,12 +774,8 @@ function DistribusiAdminContent() {
                             <MenuItem value="keluar">Keluar (Barang dari Gudang)</MenuItem> 
                         </Select> 
                     </FormControl>
-
-                    {/* --- PERUBAHAN: Mengganti dropdown plat dengan Autocomplete --- */}
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Plat *</Typography>
-                    <Autocomplete
-                        id="plat-autocomplete"
-                        options={platOptions}
+                    <Autocomplete id="plat-autocomplete" options={platOptions}
                         getOptionLabel={(option) => 
                            `${option.Nama_plat || ''}${option.Status ? ` (${option.Status})` : ''}${option.stok !== undefined ? ` - Stok: ${option.stok}` : ''}`
                         }
@@ -722,32 +785,17 @@ function DistribusiAdminContent() {
                             setFormError('');
                             setForm(f => ({ ...f, ID_Plat: newValue ? newValue.ID_Plat : '' }));
                         }}
-                        loading={loading.platOptions}
-                        loadingText="Memuat plat..."
-                        noOptionsText="Plat tidak ditemukan"
+                        loading={loading.platOptions} loadingText="Memuat plat..." noOptionsText="Plat tidak ditemukan"
                         disabled={loading.submit || loading.platCheckLoading || !form.Jenis_distribusi}
                         sx={{ mb: 2 }}
                         renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                placeholder="Cari atau Pilih Plat"
-                                size="small"
-                                required
-                                InputProps={{
-                                    ...params.InputProps,
-                                    sx: { borderRadius: '8px' },
-                                    endAdornment: (
-                                        <>
-                                            {loading.platOptions ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </>
-                                    ),
+                            <TextField {...params} placeholder="Cari atau Pilih Plat" size="small" required
+                                InputProps={{ ...params.InputProps, sx: { borderRadius: '8px' },
+                                    endAdornment: ( <> {loading.platOptions ? <CircularProgress color="inherit" size={20} /> : null} {params.InputProps.endAdornment} </> ),
                                 }}
                             />
                         )}
                     />
-                    {/* --- Akhir Perubahan --- */}
-
                     {renderFormField(form.Jenis_distribusi === 'masuk' ? 'User PIC Gudang *' : 'User Penerima *', 'UserID', userOptions, loading.userOptions, form.Jenis_distribusi === 'masuk' ? 'Pilih User PIC Gudang' : 'Pilih User Penerima')} 
                     {form.Jenis_distribusi === 'keluar' && (renderFormField('Lokasi Tujuan *', 'ID_Lokasi_tujuan', lokasiOptions, loading.lokasiOptions, 'Pilih Lokasi Tujuan'))} 
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Jumlah *</Typography> 
@@ -757,71 +805,78 @@ function DistribusiAdminContent() {
                 <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5, bgcolor: theme.palette.background.default }}> <Button onClick={handleClose} disabled={loading.submit || loading.platCheckLoading} variant="text" sx={{ borderRadius: '8px' }} > Batal </Button> <Button onClick={handleSubmit} variant="contained" disabled={loading.submit || loading.platOptions || loading.lokasiOptions || loading.userOptions || loading.platCheckLoading || !form.Jenis_distribusi || !form.ID_Plat || !form.UserID || !form.Jumlah || (form.Jenis_distribusi === 'keluar' && !form.ID_Lokasi_tujuan)} sx={{ borderRadius: '8px' }} > {loading.submit || loading.platCheckLoading ? (<> <CircularProgress size={18} sx={{ mr: 1 }} color="inherit" /> {loading.submit ? 'Menyimpan...' : (loading.platCheckLoading ? 'Memeriksa Plat...' : 'Memproses...')} </>) : (connectionStatus.slow ? 'Simpan (Lambat)' : 'Simpan Distribusi')} </Button> </DialogActions>
             </Dialog>
 
-            <Dialog
-                open={openQrDialog}
-                onClose={handleCloseQrDialog}
-                maxWidth="xs"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: '12px', m: { xs: 1, sm: 2 } } }}
-            >
+            {/* --- DIALOG UNTUK QR CODE --- */}
+            <Dialog open={openQrDialog} onClose={handleCloseQrDialog} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '12px', m: { xs: 1, sm: 2 } } }} >
                 <DialogTitle sx={{ bgcolor: theme.palette.success.dark, color: theme.palette.success.contrastText, py: 1.5, px: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6">QR Code Distribusi</Typography>
                     <IconButton onClick={handleCloseQrDialog} sx={{ color: theme.palette.success.contrastText }} > <ClearIcon /> </IconButton>
                 </DialogTitle>
                 <DialogContent sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
                     {generatedQrCode ? (
-                        <Box
-                            className="qr-code-container"
-                            sx={{
-                                p: 2,
-                                border: `1px solid ${theme.palette.divider}`,
-                                borderRadius: '8px',
-                                mt: 1,
-                                background: 'white'
-                            }}
-                        >
-                            <Typography variant="h6" sx={{ mb: 1, color: 'black' }}>
-                                ID Distribusi: <strong>{generatedDistribusiId}</strong>
-                            </Typography>
+                        <Box className="qr-code-container" sx={{ p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', mt: 1, background: 'white' }} >
+                            <Typography variant="h6" sx={{ mb: 1, color: 'black' }}> ID Distribusi: <strong>{generatedDistribusiId}</strong> </Typography>
                             <Box display="flex" justifyContent="center" my={2} className="qr-code-canvas-dialog">
-                                <QRCodeCanvas
-                                    key={generatedQrCode}
-                                    value={generatedQrCode}
-                                    size={Math.min(250, typeof window !== 'undefined' ? window.innerWidth - 140 : 250)}
-                                    level="H"
-                                    bgColor="#FFFFFF"
-                                    fgColor="#000000"
-                                />
+                                <QRCodeCanvas key={generatedQrCode} value={generatedQrCode} size={Math.min(250, typeof window !== 'undefined' ? window.innerWidth - 140 : 250)} level="H" bgColor="#FFFFFF" fgColor="#000000" />
                             </Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all', fontSize: '0.7rem', color: 'black' }}>
-                                Kode: {generatedQrCode}
-                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all', fontSize: '0.7rem', color: 'black' }}> Kode: {generatedQrCode} </Typography>
                         </Box>
-                    ) : (
-                        <Typography>QR Code tidak dapat ditampilkan. Kode tidak tersedia.</Typography>
-                    )}
+                    ) : ( <Typography>QR Code tidak dapat ditampilkan. Kode tidak tersedia.</Typography> )}
                 </DialogContent>
                 <Divider />
                 <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5, bgcolor: theme.palette.background.default, justifyContent: 'space-between' }}>
                     <Button onClick={handleCloseQrDialog} variant="outlined" color="primary" sx={{ borderRadius: '8px' }} > Tutup </Button>
-                    <Button
-                        onClick={handlePrintQR}
-                        variant="contained"
-                        color="primary"
-                        startIcon={<PrintIcon />}
-                        sx={{ borderRadius: '8px' }}
-                        disabled={!generatedQrCode}
-                    >
-                        Print QR
-                    </Button>
+                    <Button onClick={handlePrintQR} variant="contained" color="primary" startIcon={<PrintIcon />} sx={{ borderRadius: '8px' }} disabled={!generatedQrCode} > Print QR </Button>
                 </DialogActions>
             </Dialog>
 
+            {/* --- DIALOG UNTUK KONFIRMASI AKSI --- */}
             <Dialog open={confirmDialog.isOpen} onClose={loading.confirmation ? undefined : closeConfirmationDialog} disableEscapeKeyDown={loading.confirmation} PaperProps={{ sx: { borderRadius: '12px', m: { xs: 1, sm: 2 } } }} maxWidth="xs" fullWidth >
                 <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.palette.primary.contrastText, py: 1.5, px: 2 }}> <Typography variant="h6">{confirmDialog.title}</Typography> </DialogTitle>
                 <DialogContent sx={{ p: { xs: 2, sm: 3 }, mt: 1 }}> <Typography>{confirmDialog.message}</Typography> </DialogContent>
                 <Divider />
                 <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5, bgcolor: theme.palette.background.default }}> <Button onClick={closeConfirmationDialog} disabled={loading.confirmation} variant="text" sx={{ borderRadius: '8px' }}> Batal </Button> <Button onClick={confirmDialog.onConfirm} color="primary" variant="contained" disabled={loading.confirmation} sx={{ borderRadius: '8px' }} > {loading.confirmation ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : 'Ya, Lanjutkan'} </Button> </DialogActions>
+            </Dialog>
+
+            {/* --- BARU: Dialog untuk panduan penggunaan --- */}
+            <Dialog open={openGuide} onClose={handleCloseGuide} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+                    <HelpOutlineIcon sx={{ mr: 1.5 }} />
+                    Panduan Halaman Manajemen Distribusi
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Typography gutterBottom>
+                        Halaman ini adalah pusat kendali untuk semua aktivitas distribusi material. Sebagai admin, Anda memiliki wewenang untuk menambah, memvalidasi, dan memonitor seluruh proses.
+                    </Typography>
+                    <List dense>
+                        <ListItem>
+                            <ListItemIcon><AddCircleOutlineIcon color="primary"/></ListItemIcon>
+                            <ListItemText primary="Menambah Distribusi" secondary="Gunakan tombol 'Tambah Distribusi' untuk membuat permintaan baru, baik untuk material yang 'Masuk' ke gudang maupun 'Keluar' dari gudang."/>
+                        </ListItem>
+                        <ListItem>
+                            <ListItemIcon><CheckCircleIcon color="success"/></ListItemIcon>
+                            <ListItemText primary="Menyetujui Permintaan" secondary="Ketika status sebuah permintaan adalah 'Terdistribusi User', Anda dapat menyetujuinya dengan menekan ikon centang hijau. Aksi ini akan secara otomatis memperbarui jumlah stok material."/>
+                        </ListItem>
+                         <ListItem>
+                            <ListItemIcon><CancelIcon color="error"/></ListItemIcon>
+                            <ListItemText primary="Menolak Permintaan" secondary="Jika permintaan tidak valid, Anda dapat menolaknya dengan menekan ikon silang merah. Stok tidak akan berubah."/>
+                        </ListItem>
+                        <ListItem>
+                            <ListItemIcon><FilterListIcon color="action"/></ListItemIcon>
+                            <ListItemText primary="Filter Data" secondary="Gunakan menu dropdown 'Status' dan 'Jenis' untuk menyaring data yang ditampilkan di tabel agar lebih mudah dalam pencarian."/>
+                        </ListItem>
+                        <ListItem>
+                            <ListItemIcon><Checkbox checked readOnly color="primary" size="small" sx={{ml:0.5}} /></ListItemIcon>
+                            <ListItemText primary="Memilih & Mencetak Surat Jalan" secondary="Centang kotak pada baris data yang ingin dicetak, lalu klik tombol 'Print Surat Jalan'. Dokumen resmi akan dibuat dan siap untuk dicetak."/>
+                        </ListItem>
+                        <ListItem>
+                            <ListItemIcon><QRCodeCanvas size={24} value="panduan-qr" level="L"/></ListItemIcon>
+                            <ListItemText primary="Melihat QR Code" secondary="Klik pada ikon QR di tabel untuk melihat detail QR Code yang telah dibuat. QR code ini digunakan oleh user untuk proses validasi di lapangan."/>
+                        </ListItem>
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseGuide}>Mengerti</Button>
+                </DialogActions>
             </Dialog>
 
             <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>

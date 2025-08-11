@@ -31,7 +31,13 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
-  Checkbox
+  Checkbox,
+  // --- BARU: Import untuk panduan ---
+  Stack,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PrintIcon from '@mui/icons-material/Print';
@@ -44,9 +50,17 @@ import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
+// --- BARU: Ikon untuk tombol panduan ---
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import Layout from '../components/partials/Layout';
 import { getAllPlat, deletePlat } from '../services/platService';
 import { getAllLokasi } from '../services/lokasiService';
+
+// Import logos
+import logoBumn from '../assets/logo-bumn.png';
+import logoDefendId from '../assets/logo-defendid.png';
+import logoPtPal from '../assets/logo-pt-pal-biru.png';
+
 
 const Plat = () => {
   const [plat, setPlat] = useState([]);
@@ -61,9 +75,16 @@ const Plat = () => {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, name: '' });
   const [selectedPlats, setSelectedPlats] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  // --- BARU: State untuk dialog panduan ---
+  const [openGuide, setOpenGuide] = useState(false);
 
   const navigate = useNavigate();
 
+  // --- BARU: Handler untuk membuka dan menutup dialog panduan ---
+  const handleOpenGuide = () => setOpenGuide(true);
+  const handleCloseGuide = () => setOpenGuide(false);
+
+  // ... (semua fungsi dan hook lainnya tetap sama)
   const getLokasiName = useCallback((idLokasi) => {
     if (!lokasi || lokasi.length === 0) {
       return `ID: ${idLokasi}`;
@@ -124,7 +145,7 @@ const Plat = () => {
       setSelectedPlats([]);
       setSelectAll(false);
     }
-  }, []);
+  }, [plat.length]);
 
   useEffect(() => {
     fetchData();
@@ -142,7 +163,6 @@ const Plat = () => {
 
   useEffect(() => {
     setPage(0);
-    setSelectAll(false);
   }, [searchTerm]);
 
   const handleDeleteClick = (id, name) => setDeleteDialog({ open: true, id, name });
@@ -202,18 +222,20 @@ const Plat = () => {
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
     setSelectAll(false);
+    setSelectedPlats([]);
   };
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
     setSelectAll(false);
+    setSelectedPlats([]);
   };
 
   const handleSelectPlat = (id) => {
-    setSelectedPlats(prev => 
-      prev.includes(id) 
-        ? prev.filter(platId => platId !== id) 
+    setSelectedPlats(prev =>
+      prev.includes(id)
+        ? prev.filter(platId => platId !== id)
         : [...prev, id]
     );
   };
@@ -237,82 +259,177 @@ const Plat = () => {
     
     const selectedPlatData = plat.filter(item => selectedPlats.includes(item.ID_Plat));
     
+    const tableRows = selectedPlatData.map((item, index) => `
+        <tr>
+            <td style="text-align: center; padding: 5px;">${index + 1}</td>
+            <td style="padding: 5px;">${item.Nama_plat || '-'}</td>
+            <td style="padding: 5px;">${item.Lot_Batch_Number || '-'}</td>
+            <td style="text-align: right; padding: 5px;">${item.stok || '0'}</td>
+            <td style="padding: 5px;">${getLokasiName(item.ID_Lokasi) || '-'}</td>
+            <td style="text-align: center; padding: 5px;">${item.Status || '-'}</td>
+        </tr>
+    `).join('');
+    
     const printContent = `
-      <!DOCTYPE html>
-      <html>
+        <!DOCTYPE html>
+        <html lang="en">
         <head>
-          <title>Daftar Plat Terpilih</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #1976d2; text-align: center; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .header { margin-bottom: 20px; }
-            .footer { margin-top: 20px; font-size: 12px; text-align: right; }
-            .status-ready { color: #2e7d32; font-weight: bold; }
-            .status-tidak-tersedia { color: #d32f2f; font-weight: bold; }
-          </style>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>MEMORANDUM - PT PAL INDONESIA</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 0;
+                }
+                html, body {
+                    width: 210mm;
+                    height: 297mm;
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Times New Roman', Times, serif;
+                    font-size: 11pt;
+                }
+                .page-wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                    padding: 0.7in 0.5in 0.5in 0.5in;
+                    box-sizing: border-box;
+                }
+                .header {
+                    text-align: center;
+                }
+                .header h1 {
+                    margin: 20px 0;
+                    font-weight: bold;
+                    font-size: 14pt;
+                    letter-spacing: 4px;
+                }
+                .logo-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                .logo-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .logo-container img {
+                    max-height: 180px;
+                    width: 180px;
+                }
+                .main-content {
+                    flex-grow: 1;
+                    padding-top: 20px;
+                    font-size: 12pt;
+                    line-height: 1.5;
+                }
+                .footer {
+                    text-align: center;
+                    font-size: 9pt;
+                    color: black;
+                    padding-top: 10px;
+                    border-top: 2px solid black;
+                }
+                .footer p {
+                    margin: 2px 0;
+                }
+                .data-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    font-size: 10pt;
+                }
+                .data-table th, .data-table td {
+                    border: 1px solid black;
+                    padding: 8px;
+                    text-align: left;
+                    vertical-align: top;
+                }
+                .data-table th {
+                    background-color: #e0e0e0;
+                    font-weight: bold;
+                    text-align: center;
+                }
+                @media print {
+                    body {
+                        background-color: white;
+                    }
+                }
+            </style>
         </head>
         <body>
-          <div class="header">
-            <h1>Laporan Data Plat</h1>
-            <p>Tanggal Cetak: ${new Date().toLocaleDateString('id-ID', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}</p>
-            <p>Jumlah Plat: ${selectedPlats.length}</p>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Nama Plat</th>
-                <th>Lot/Batch</th>
-                <th>Stok</th>
-                <th>Lokasi</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${selectedPlatData.map((item, index) => `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td>${item.Nama_plat || '-'}</td>
-                  <td>${item.Lot_Batch_Number || '-'}</td>
-                  <td>${item.stok || '0'}</td>
-                  <td>${getLokasiName(item.ID_Lokasi) || '-'}</td>
-                  <td class="${item.Status === 'Ready' ? 'status-ready' : 'status-tidak-tersedia'}">
-                    ${item.Status || '-'}
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            <p>Dicetak oleh Sistem Manajemen Plat</p>
-          </div>
+            <div class="page-wrapper">
+                <header class="header">
+                    <div class="logo-container">
+                        <div class="logo-left">
+                            <img src="${logoBumn}" alt="Logo BUMN">
+                            <img src="${logoDefendId}" alt="Logo Defend ID">
+                        </div>
+                        <img src="${logoPtPal}" alt="Logo PT PAL Indonesia">
+                    </div>
+                    <h1>M E M O R A N D U M</h1> 
+                </header>
+
+                <main class="main-content">
+                    <p><strong>Perihal:</strong> Laporan Data Plat Material</p>
+                    <p><strong>Tanggal Cetak:</strong> ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p>Dengan hormat,</p>
+                    <p>Berikut ini adalah laporan data plat material yang telah dipilih dari sistem manajemen inventaris:</p>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Nama Plat</th>
+                                <th>Lot/Batch Number</th>
+                                <th>Stok</th>
+                                <th>Lokasi</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    
+                    <p style="margin-top: 20px;">Demikian memorandum ini dibuat untuk dapat dipergunakan sebagaimana mestinya. Atas perhatiannya, kami ucapkan terima kasih.</p>
+                    
+                    <div style="margin-top: 50px; text-align: right; page-break-inside: avoid;">
+                        <p>Surabaya, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <p>Kepala Biro Dukungan Dan Pergudangan,</p>
+                        <br/><br/><br/><br/>
+                        <p><strong>(________________________)</strong></p>
+                        <p><em>Muslich Hardian</em></p>
+                    </div>
+                </main>
+
+                <footer class="footer">
+                    <p>Kantor Pusat : PT PAL INDONESIA, UJUNG SURABAYA PO. BOX. 1134 INDONESIA. Web Site : http://www.pal.co.id</p>
+                    <p>Telp. +62-31-3292275 (Hunting) Fax : +62-31-3292530, 3292493, 3292516, E-Mail : headoffice@pal.co.id</p> 
+                    <p>Kantor Perwakilan : Jl. TANAH ABANG II / 27 JAKARTA 10160, PHONE +62-21-3846833 , Fax : +62-21-3843717, E-Mail : jakartabranch@pal.co.id</p> 
+                </footer>
+            </div>
         </body>
-      </html>
+        </html>
     `;
 
     const printWindow = window.open('', '_blank');
-    printWindow.document.open();
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    
-    printWindow.onload = function() {
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 200);
-    };
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      printWindow.onload = function() {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 250);
+      };
+    }
   };
 
   if (loading && plat.length === 0 && !error) {
@@ -341,36 +458,27 @@ const Plat = () => {
             <CardContent>
               {error && ( <Alert severity="error" sx={{ mb: 3 }} variant="filled" onClose={() => setError(null)} > {error} </Alert> )}
 
+              {/* DIUBAH: Menggunakan Stack untuk merapikan grup tombol */}
               <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-                <Grid item xs={12} sm="auto">
-                  <Button variant="contained" color="primary" onClick={() => navigate('/plat/add')} startIcon={<AddIcon />} sx={{ borderRadius: 2, px: 3, py: 1, boxShadow: 3, width: {xs: '100%', sm: 'auto'} }} >
-                    Tambahkan Data Plat
-                  </Button>
+                <Grid item xs={12} md="auto">
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <Button variant="contained" color="primary" onClick={() => navigate('/plat/add')} startIcon={<AddIcon />} sx={{ borderRadius: 2, px: 3, py: 1 }} >
+                      Tambahkan Data Plat
+                    </Button>
+                    <Button variant="outlined" color="primary" onClick={() => fetchData(true)} startIcon={<RefreshIcon />} disabled={loading} sx={{ borderRadius: 2, px: 3, py: 1 }} >
+                      {loading && plat.length > 0 ? <CircularProgress size={20} sx={{mr:1}} /> : null} Refresh
+                    </Button>
+                    <Button variant="contained" color="secondary" onClick={handlePrintSelected} startIcon={<PrintIcon />} disabled={selectedPlats.length === 0} sx={{ borderRadius: 2, px: 3, py: 1 }} >
+                      Cetak ({selectedPlats.length})
+                    </Button>
+                    {/* --- BARU: Tombol untuk membuka panduan --- */}
+                    <Button variant="outlined" color="info" onClick={handleOpenGuide} startIcon={<HelpOutlineIcon />} sx={{ borderRadius: 2, px: 3, py: 1 }} >
+                      Panduan
+                    </Button>
+                  </Stack>
                 </Grid>
-                <Grid item xs={12} sm="auto">
-                  <Button variant="outlined" color="primary" onClick={() => fetchData(true)} startIcon={<RefreshIcon />} disabled={loading} sx={{ borderRadius: 2, px: 3, py: 1, width: {xs: '100%', sm: 'auto'} }} >
-                    {loading && plat.length > 0 ? <CircularProgress size={20} sx={{mr:1}} /> : null} Refresh
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm="auto">
-                  <Button 
-                    variant="contained" 
-                    color="secondary" 
-                    onClick={handlePrintSelected} 
-                    startIcon={<PrintIcon />}
-                    disabled={selectedPlats.length === 0}
-                    sx={{ borderRadius: 2, px: 3, py: 1, boxShadow: 3, width: {xs: '100%', sm: 'auto'} }}
-                  >
-                    Cetak ({selectedPlats.length})
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Cari plat (nama, lot, ID, lokasi, status, stok)..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                <Grid item xs={12} md>
+                  <TextField fullWidth variant="outlined" placeholder="Cari plat (nama, lot, ID, lokasi, status, stok)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{
                       startAdornment: ( <InputAdornment position="start"> <SearchIcon color="action" /> </InputAdornment> ),
                       endAdornment: searchTerm && ( <InputAdornment position="end"> <Tooltip title="Hapus pencarian" arrow> <IconButton size="small" onClick={handleClearSearch} > <ClearIcon fontSize="small" /> </IconButton> </Tooltip> </InputAdornment> ),
@@ -383,7 +491,7 @@ const Plat = () => {
               {searchTerm && ( <Alert severity="info" sx={{ mb: 2 }} variant="outlined" > Menampilkan {filteredPlat.length} hasil untuk "{searchTerm}" </Alert> )}
 
               {filteredPlat.length === 0 && !loading ? (
-                <Alert severity="info" variant="outlined" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3, borderRadius: 2 }} >
+                <Alert severity="warning" variant="outlined" sx={{ p: 3, borderRadius: 2 }} >
                   {searchTerm ? <> Tidak ada data plat sesuai "{searchTerm}". <Button size="small" onClick={handleClearSearch} sx={{ ml: 1 }} > Hapus Filter </Button> </> : 'Tidak ada data plat tersedia.' }
                 </Alert>
               ) : (
@@ -393,58 +501,44 @@ const Plat = () => {
                       <TableHead>
                         <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                           <TableCell padding="checkbox">
-                            <Checkbox
-                              color="primary"
-                              indeterminate={selectedPlats.length > 0 && selectedPlats.length < currentPagePlats.length}
-                              checked={selectAll}
-                              onChange={handleSelectAll}
-                            />
+                            <Checkbox color="primary" indeterminate={selectedPlats.length > 0 && selectedPlats.length < currentPagePlats.length} checked={selectAll} onChange={handleSelectAll} />
                           </TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem', width: '5%' }}>No.</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Nama Plat</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Lot/Batch</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Stok</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Lokasi</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Status</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Aksi</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>No.</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Nama Plat</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Lot/Batch</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 'bold' }}>Stok</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Lokasi</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Aksi</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {(loading && plat.length > 0 ? Array(rowsPerPage).fill(null) : currentPagePlats)
                           .map((item, index) => (
                             loading && plat.length > 0 ? (
-                                <TableRow key={`skeleton-${index}`}>
-                                    <TableCell colSpan={8}><Box sx={{height: 40, bgcolor: 'grey.200', animation: 'pulse 1.5s infinite ease-in-out'}} /></TableCell>
-                                </TableRow>
+                              <TableRow key={`skeleton-${index}`}>
+                                <TableCell colSpan={8}><Box sx={{height: 40, bgcolor: 'grey.200', animation: 'pulse 1.5s infinite ease-in-out'}} /></TableCell>
+                              </TableRow>
                             ) : (
-                            <TableRow
-                              key={item.ID_Plat}
-                              sx={{ '&:hover': { bgcolor: '#f0f7ff' }, bgcolor: hoveredRow === item.ID_Plat ? '#f0f7ff' : 'inherit', transition: 'background-color 0.2s ease' }}
-                              onMouseEnter={() => setHoveredRow(item.ID_Plat)}
-                              onMouseLeave={() => setHoveredRow(null)}
-                            >
-                              <TableCell padding="checkbox">
-                                <Checkbox
-                                  color="primary"
-                                  checked={selectedPlats.includes(item.ID_Plat)}
-                                  onChange={() => handleSelectPlat(item.ID_Plat)}
-                                />
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontSize: '0.85rem', fontWeight: 'medium' }}> {(page * rowsPerPage) + index + 1} </TableCell>
-                              <TableCell sx={{ fontSize: '0.85rem' }}>{item.Nama_plat}</TableCell>
-                              <TableCell sx={{ fontSize: '0.85rem' }}>{item.Lot_Batch_Number}</TableCell>
-                              <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{item.stok}</TableCell>
-                              <TableCell sx={{ fontSize: '0.85rem' }}> <Chip label={getLokasiName(item.ID_Lokasi)} color="info" variant="outlined" size="small" sx={{ fontWeight: 'medium' }} /> </TableCell>
-                              <TableCell align="center" sx={{ fontSize: '0.85rem' }}> <Chip icon={getStatusIcon(item.Status)} label={item.Status} color={getStatusColor(item.Status)} variant="filled" size="small" sx={{ fontWeight: 'medium' }} /> </TableCell>
-                              <TableCell align="center">
-                                <Tooltip title="Edit Data" arrow TransitionComponent={Fade}>
-                                  <IconButton color="primary" onClick={() => navigate(`/plat/update/${item.ID_Plat}`)} sx={{ mx: 0.5, '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.08)', transform: 'scale(1.1)', transition: 'transform 0.2s' } }} > <EditIcon fontSize="small"/> </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Hapus Data" arrow TransitionComponent={Fade}>
-                                  <IconButton color="error" onClick={() => handleDeleteClick(item.ID_Plat, item.Nama_plat)} disabled={deleteLoading} sx={{ mx: 0.5, '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.08)', transform: 'scale(1.1)', transition: 'transform 0.2s' } }} > <DeleteIcon fontSize="small"/> </IconButton>
-                                </Tooltip>
-                              </TableCell>
-                            </TableRow>
+                              <TableRow key={item.ID_Plat} hover onMouseEnter={() => setHoveredRow(item.ID_Plat)} onMouseLeave={() => setHoveredRow(null)} >
+                                <TableCell padding="checkbox">
+                                  <Checkbox color="primary" checked={selectedPlats.includes(item.ID_Plat)} onChange={() => handleSelectPlat(item.ID_Plat)} />
+                                </TableCell>
+                                <TableCell align="center"> {(page * rowsPerPage) + index + 1} </TableCell>
+                                <TableCell>{item.Nama_plat}</TableCell>
+                                <TableCell>{item.Lot_Batch_Number}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>{item.stok}</TableCell>
+                                <TableCell> <Chip label={getLokasiName(item.ID_Lokasi)} color="info" variant="outlined" size="small" /> </TableCell>
+                                <TableCell align="center"> <Chip icon={getStatusIcon(item.Status)} label={item.Status} color={getStatusColor(item.Status)} size="small" /> </TableCell>
+                                <TableCell align="center">
+                                  <Tooltip title="Edit Data" arrow>
+                                    <IconButton size="small" color="primary" onClick={() => navigate(`/plat/update/${item.ID_Plat}`)} > <EditIcon /> </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Hapus Data" arrow>
+                                    <IconButton size="small" color="error" onClick={() => handleDeleteClick(item.ID_Plat, item.Nama_plat)} disabled={deleteLoading} > <DeleteIcon /> </IconButton>
+                                  </Tooltip>
+                                </TableCell>
+                              </TableRow>
                             )
                           ))}
                       </TableBody>
@@ -464,28 +558,74 @@ const Plat = () => {
                 </>
               )}
               <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
-                 Total Data Plat: {plat.length} {searchTerm && `(Hasil filter: ${filteredPlat.length})`}
+                Total Data Plat: {plat.length} {searchTerm && `(Hasil filter: ${filteredPlat.length})`}
               </Typography>
             </CardContent>
           </Card>
         </Box>
 
         <Dialog open={deleteDialog.open} onClose={handleDeleteCancel} aria-labelledby="delete-dialog-title" maxWidth="sm" fullWidth >
-          <DialogTitle id="delete-dialog-title" sx={{ color: 'error.main' }}> <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> <WarningIcon /> Konfirmasi Hapus </Box> </DialogTitle>
-          <DialogContent> <DialogContentText> Apakah Anda yakin ingin menghapus "<strong>{deleteDialog.name}</strong>" (ID: {deleteDialog.id})? <br /><br /> <em>Tindakan ini tidak dapat dibatalkan.</em> </DialogContentText> </DialogContent>
-          <DialogActions sx={{ p: 2, gap: 1 }}>
-            <Button onClick={handleDeleteCancel} variant="outlined" disabled={deleteLoading} > Batal </Button>
-            <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={deleteLoading} startIcon={deleteLoading ? <CircularProgress size={16} /> : <DeleteIcon />} > {deleteLoading ? 'Menghapus...' : 'Hapus'} </Button>
-          </DialogActions>
+            <DialogTitle id="delete-dialog-title" sx={{ color: 'error.main' }}> <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}> <WarningIcon /> Konfirmasi Hapus </Box> </DialogTitle>
+            <DialogContent> <DialogContentText> Apakah Anda yakin ingin menghapus "<strong>{deleteDialog.name}</strong>" (ID: {deleteDialog.id})? <br /><br /> <em>Tindakan ini tidak dapat dibatalkan.</em> </DialogContentText> </DialogContent>
+            <DialogActions sx={{ p: 2, gap: 1 }}>
+              <Button onClick={handleDeleteCancel} variant="outlined" disabled={deleteLoading} > Batal </Button>
+              <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={deleteLoading} startIcon={deleteLoading ? <CircularProgress size={16} /> : <DeleteIcon />} > {deleteLoading ? 'Menghapus...' : 'Hapus'} </Button>
+            </DialogActions>
+        </Dialog>
+        
+        {/* --- BARU: Dialog untuk panduan penggunaan --- */}
+        <Dialog open={openGuide} onClose={handleCloseGuide} maxWidth="md" fullWidth>
+            <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+                <HelpOutlineIcon sx={{ mr: 1 }} />
+                Panduan Halaman Data Plat
+            </DialogTitle>
+            <DialogContent dividers>
+                <Typography gutterBottom>
+                    Halaman ini digunakan untuk mengelola data inventaris plat material. Berikut adalah fungsi utama yang tersedia:
+                </Typography>
+                <List dense>
+                    <ListItem>
+                        <ListItemIcon><AddIcon color="primary"/></ListItemIcon>
+                        <ListItemText primary="Menambah Data Plat" secondary="Gunakan tombol 'Tambahkan Data Plat' untuk masuk ke halaman formulir dan membuat data plat baru."/>
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon><SearchIcon color="action"/></ListItemIcon>
+                        <ListItemText primary="Mencari Data" secondary="Ketik kata kunci pada kolom pencarian untuk memfilter data berdasarkan nama, lot/batch, ID, lokasi, status, atau stok."/>
+                    </ListItem>
+                     <ListItem>
+                        <ListItemIcon><Checkbox checked readOnly color="primary" size="small" sx={{ml:0.5}} /></ListItemIcon>
+                        <ListItemText primary="Memilih Data" secondary="Centang kotak pada setiap baris untuk memilih satu atau lebih data. Gunakan checkbox di header tabel untuk memilih semua data pada halaman yang sedang aktif."/>
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon><PrintIcon color="secondary"/></ListItemIcon>
+                        <ListItemText primary="Mencetak Memorandum" secondary="Setelah memilih data, tombol 'Cetak' akan aktif. Klik tombol ini untuk menghasilkan dokumen memorandum resmi dalam format A4 yang siap untuk dicetak."/>
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon><EditIcon color="action"/></ListItemIcon>
+                        <ListItemText primary="Mengedit Data" secondary="Klik ikon pensil pada kolom 'Aksi' untuk mengubah detail dari data plat yang bersangkutan."/>
+                    </ListItem>
+                     <ListItem>
+                        <ListItemIcon><DeleteIcon color="error"/></ListItemIcon>
+                        <ListItemText primary="Menghapus Data" secondary="Klik ikon tong sampah untuk menghapus data. Anda akan diminta untuk melakukan konfirmasi sebelum data dihapus secara permanen."/>
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon><RefreshIcon color="primary"/></ListItemIcon>
+                        <ListItemText primary="Refresh Data" secondary="Klik tombol 'Refresh' untuk memuat ulang data terbaru dari server. Ini juga berguna jika Anda ingin menyinkronkan data setelah ada perubahan di tab lain."/>
+                    </ListItem>
+                </List>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleCloseGuide}>Tutup</Button>
+            </DialogActions>
         </Dialog>
 
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={deleteLoading || (loading && plat.length === 0 && !error)}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <CircularProgress color="inherit" />
-            <Typography variant="subtitle1" sx={{ mt: 2 }}>
-              {deleteLoading ? 'Menghapus data...' : (loading && plat.length === 0 && !error ? 'Memuat Data Plat...' : '')}
-            </Typography>
-          </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <CircularProgress color="inherit" />
+              <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                {deleteLoading ? 'Menghapus data...' : (loading && plat.length === 0 && !error ? 'Memuat Data Plat...' : '')}
+              </Typography>
+            </Box>
         </Backdrop>
       </Container>
     </Layout>
